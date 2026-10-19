@@ -1,4 +1,5 @@
-numpy
-shapely
-eccodes
-cdsapi
+numpy==2.0.2
+shapely==2.0.7
+eccodes==2.50.0
+eccodeslib==2.43.0
+cdsapi==0.7.7

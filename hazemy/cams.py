@@ -47,7 +47,8 @@ def cached_grib(run: datetime, max_lead_h: int, cache_dir: str, key: str, budget
                 retrieve=retrieve_grib, log=print) -> str:
     """Path of the run's GRIB; downloaded only if the cache lacks it.
 
-    The cache name carries the lead span so a longer request never reuses a shorter file. The
+    The cache name carries the lead span so a different request never reuses another file; callers
+    pass a fixed span so the name is stable for the whole run day. The
     download goes to a temporary name first so an interrupted run leaves no half file.
     """
     os.makedirs(cache_dir, exist_ok=True)

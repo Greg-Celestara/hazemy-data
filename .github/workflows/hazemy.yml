@@ -6,8 +6,9 @@
 # Schedule: every hour at :20. The 00 UTC CAMS run is published about 10:00 UTC, so the 10:20 run
 # is the first to see it; until then the job expects (and finds in its cache) the previous day's
 # run. If CAMS is late, 10:20 fails and the later hourly runs retry. Each run refreshes the FIRMS
-# fires and the "now" window; the CAMS download is cached per run day, so the ADS is called once
-# per day and the other hours cost a few MB of FIRMS and GFS traffic.
+# fires and the "now" window. The CAMS downloads are cached per run day with fixed lead spans, so
+# per run day the ADS is called once for the newest run and once for the previous run; the other
+# hours cost a few MB of FIRMS and GFS traffic.
 #
 # A failed run never reaches the deploy job, so the last good file stays live.
 

@@ -13,12 +13,15 @@ from datetime import timedelta
 from hazemy import cams, compute, firms, gfs
 from hazemy import grid as gridmod
 from hazemy import output
-from hazemy.common import Budget, make_logger, require_env, utc_now
+from hazemy.common import Budget, PipelineError, make_logger, require_env, utc_now
 
 DEFAULT_OUT = os.path.join("site", "v1", "hazemy.json")
 DEFAULT_CACHE = "cache"
 TOWNS_PATH = os.path.join(gridmod.DATA_DIR, "towns.json")
 PREV_RUN_LEAD_H = 24
+# One fixed span for the newest run, long enough for any hour of the day (63 h from 16:20 UTC),
+# so the cache filename is the same for every run of a day and ADS is asked once per run.
+NEWEST_RUN_LEAD_H = 72
 
 
 def load_towns(path: str = TOWNS_PATH) -> list:
@@ -30,7 +33,11 @@ def cams_series(env, now, cells, cache_dir, budget, log, retrieve) -> tuple:
     """({valid: per-cell PM2.5}, newest run). Adds the previous run when the windows need it."""
     run = cams.expected_run(now)
     earliest = compute.earliest_needed(now)
-    runs = [(run, compute.lead_hours(run, now))]
+    needed = compute.lead_hours(run, now)
+    if needed > NEWEST_RUN_LEAD_H:
+        raise PipelineError(f"CAMS windows need {needed} h of lead; the request covers "
+                            f"{NEWEST_RUN_LEAD_H} h. Raise NEWEST_RUN_LEAD_H.")
+    runs = [(run, NEWEST_RUN_LEAD_H)]
     if earliest < run:
         runs.insert(0, (run - timedelta(days=1), PREV_RUN_LEAD_H))
     lats, lons = gridmod.cell_arrays(cells)

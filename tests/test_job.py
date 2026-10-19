@@ -61,10 +61,11 @@ class JobTest(unittest.TestCase):
         self.out = os.path.join(self._dir.name, "site", "v1", "hazemy.json")
         self.cache = os.path.join(self._dir.name, "cache")
         self.lines = []
+        self.now = NOW
 
     def run_it(self, csv_text=HEADER, retrieve=fake_retrieve, env=ENV):
         http = {"urlopen": fake_urlopen(csv_text), "sleep": lambda s: None}
-        return run_job(env, out=self.out, cache_dir=self.cache, now_fn=lambda: NOW,
+        return run_job(env, out=self.out, cache_dir=self.cache, now_fn=lambda: self.now,
                        log=self.lines.append, retrieve=retrieve, fetch_wind=fake_wind, http=http)
 
     def read(self):
@@ -118,7 +119,28 @@ class Success(JobTest):
             runs.append((run.day, lead))
             fake_retrieve(run, lead, target, key)
         self.run_it(retrieve=spy)
-        self.assertEqual(runs, [(18, 24), (19, 39)])
+        self.assertEqual(runs, [(18, 24), (19, 72)])
+
+    def test_late_run_asks_for_tomorrow_and_reuses_the_cache_at_another_hour(self):
+        late = datetime(2026, 10, 19, 16, 20, tzinfo=timezone.utc)
+        later = datetime(2026, 10, 19, 21, 20, tzinfo=timezone.utc)
+        calls = []
+
+        def spy(run, lead, target, key):
+            calls.append((run.day, lead))
+            fake_retrieve(run, lead, target, key)
+        self.now = late
+        self.assertEqual(self.run_it(retrieve=spy), 0)
+        # 16:20 UTC is already 20 Oct in MYT, so "tomorrow" is MYT 21 Oct (16:00 UTC on the 20th to 16:00 on the 21st).
+        self.assertEqual(self.read()["cells"][0]["tomorrow"]["band"], 2)
+        steps = compute.tomorrow_steps(late)
+        self.assertEqual((steps[0], steps[-1]), (datetime(2026, 10, 20, 18, tzinfo=timezone.utc),
+                                                 datetime(2026, 10, 21, 15, tzinfo=timezone.utc)))
+        self.assertEqual(compute.lead_hours(datetime(2026, 10, 19, tzinfo=timezone.utc), late), 63)
+        self.assertEqual(calls, [(18, 24), (19, 72)])
+        self.now = later
+        self.assertEqual(self.run_it(retrieve=spy), 0)
+        self.assertEqual(calls, [(18, 24), (19, 72)])
 
 
 class Failure(JobTest):
@@ -158,6 +180,19 @@ class Failure(JobTest):
     def test_firms_error_page_fails_the_run_and_keeps_the_file(self):
         self.seed_published()
         self.assertEqual(self.run_it("Invalid MAP_KEY."), 1)
+        with open(self.out) as fh:
+            self.assertEqual(fh.read(), '{"last":"good"}')
+
+    def test_gfs_failing_for_both_cycles_exits_nonzero_and_keeps_the_file(self):
+        self.seed_published()
+
+        def no_gfs(cycle, fhr, budget, log=print):
+            raise PipelineError(f"GFS {cycle:%H}Z not on the bucket")
+        http = {"urlopen": fake_urlopen(HEADER), "sleep": lambda s: None}
+        code = run_job(ENV, out=self.out, cache_dir=self.cache, now_fn=lambda: NOW,
+                       log=self.lines.append, retrieve=fake_retrieve, fetch_wind=no_gfs, http=http)
+        self.assertEqual(code, 1)
+        self.assertIn("No usable GFS cycle", "\n".join(self.lines))
         with open(self.out) as fh:
             self.assertEqual(fh.read(), '{"last":"good"}')
 
