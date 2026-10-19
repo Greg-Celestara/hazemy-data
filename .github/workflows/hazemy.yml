@@ -1,0 +1,71 @@
+# Builds site/v1/hazemy.json and publishes it with GitHub Pages.
+#
+# Secrets (repo Settings -> Secrets and variables -> Actions): ADS_API_KEY, FIRMS_MAP_KEY.
+# Pages must be set to "GitHub Actions" as its source (Settings -> Pages).
+#
+# Schedule: every hour at :20. The 00 UTC CAMS run is published about 10:00 UTC, so the 10:20 run
+# is the first to see it; until then the job expects (and finds in its cache) the previous day's
+# run. If CAMS is late, 10:20 fails and the later hourly runs retry. Each run refreshes the FIRMS
+# fires and the "now" window; the CAMS download is cached per run day, so the ADS is called once
+# per day and the other hours cost a few MB of FIRMS and GFS traffic.
+#
+# A failed run never reaches the deploy job, so the last good file stays live.
+
+name: HazeMY data
+
+on:
+  schedule:
+    - cron: '20 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hazemy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install packages
+        run: pip install -r requirements.txt
+      - name: Date of the expected CAMS run
+        id: day
+        # Same 10 h publish lag as PUBLISH_LAG_H in hazemy/cams.py.
+        run: echo "day=$(date -u -d '-10 hours' +%F)" >> "$GITHUB_OUTPUT"
+      - name: Restore the CAMS download of that run
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: hazemy-cams-${{ steps.day.outputs.day }}
+      - name: Build hazemy.json
+        env:
+          ADS_API_KEY: ${{ secrets.ADS_API_KEY }}
+          FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+        run: python -m hazemy --out site/v1/hazemy.json --cache cache
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

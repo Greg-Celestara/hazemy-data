@@ -1,0 +1,550 @@
+{
+ "source": "Hand-compiled list of Malaysian towns (about 50,000 people or more as of the 2020 census, judged from general knowledge, plus every state capital and federal territory). Names and coordinates are plain geographic facts, rounded to 0.01 degree (about 1 km). Every town that also appears in Natural Earth populated places (public domain, v5.1.2) or Wikidata (CC0) was cross-checked and lies within 0.06 degree of that source; no geocoding service was used. Used only for the app's on-device nearest-town label.",
+ "towns": [
+  {
+   "name": "Kangar",
+   "lat": 6.44,
+   "lon": 100.2
+  },
+  {
+   "name": "Alor Setar",
+   "lat": 6.12,
+   "lon": 100.37
+  },
+  {
+   "name": "Sungai Petani",
+   "lat": 5.65,
+   "lon": 100.49
+  },
+  {
+   "name": "Kulim",
+   "lat": 5.36,
+   "lon": 100.56
+  },
+  {
+   "name": "Kuah",
+   "lat": 6.32,
+   "lon": 99.85
+  },
+  {
+   "name": "Jitra",
+   "lat": 6.27,
+   "lon": 100.42
+  },
+  {
+   "name": "Baling",
+   "lat": 5.68,
+   "lon": 100.92
+  },
+  {
+   "name": "George Town",
+   "lat": 5.41,
+   "lon": 100.33
+  },
+  {
+   "name": "Butterworth",
+   "lat": 5.4,
+   "lon": 100.36
+  },
+  {
+   "name": "Bukit Mertajam",
+   "lat": 5.36,
+   "lon": 100.46
+  },
+  {
+   "name": "Bayan Lepas",
+   "lat": 5.3,
+   "lon": 100.27
+  },
+  {
+   "name": "Nibong Tebal",
+   "lat": 5.17,
+   "lon": 100.48
+  },
+  {
+   "name": "Ipoh",
+   "lat": 4.6,
+   "lon": 101.08
+  },
+  {
+   "name": "Taiping",
+   "lat": 4.85,
+   "lon": 100.74
+  },
+  {
+   "name": "Teluk Intan",
+   "lat": 4.02,
+   "lon": 101.02
+  },
+  {
+   "name": "Sitiawan",
+   "lat": 4.22,
+   "lon": 100.7
+  },
+  {
+   "name": "Lumut",
+   "lat": 4.23,
+   "lon": 100.63
+  },
+  {
+   "name": "Kuala Kangsar",
+   "lat": 4.77,
+   "lon": 100.94
+  },
+  {
+   "name": "Batu Gajah",
+   "lat": 4.47,
+   "lon": 101.04
+  },
+  {
+   "name": "Kampar",
+   "lat": 4.31,
+   "lon": 101.15
+  },
+  {
+   "name": "Tapah",
+   "lat": 4.2,
+   "lon": 101.26
+  },
+  {
+   "name": "Shah Alam",
+   "lat": 3.07,
+   "lon": 101.52
+  },
+  {
+   "name": "Klang",
+   "lat": 3.04,
+   "lon": 101.45
+  },
+  {
+   "name": "Port Klang",
+   "lat": 3.0,
+   "lon": 101.39
+  },
+  {
+   "name": "Petaling Jaya",
+   "lat": 3.11,
+   "lon": 101.61
+  },
+  {
+   "name": "Subang Jaya",
+   "lat": 3.05,
+   "lon": 101.58
+  },
+  {
+   "name": "Puchong",
+   "lat": 3.03,
+   "lon": 101.62
+  },
+  {
+   "name": "Ampang",
+   "lat": 3.15,
+   "lon": 101.76
+  },
+  {
+   "name": "Kajang",
+   "lat": 2.99,
+   "lon": 101.79
+  },
+  {
+   "name": "Bangi",
+   "lat": 2.9,
+   "lon": 101.78
+  },
+  {
+   "name": "Semenyih",
+   "lat": 2.95,
+   "lon": 101.84
+  },
+  {
+   "name": "Selayang",
+   "lat": 3.25,
+   "lon": 101.65
+  },
+  {
+   "name": "Rawang",
+   "lat": 3.32,
+   "lon": 101.58
+  },
+  {
+   "name": "Sungai Buloh",
+   "lat": 3.21,
+   "lon": 101.58
+  },
+  {
+   "name": "Cyberjaya",
+   "lat": 2.92,
+   "lon": 101.66
+  },
+  {
+   "name": "Kuala Selangor",
+   "lat": 3.34,
+   "lon": 101.25
+  },
+  {
+   "name": "Banting",
+   "lat": 2.81,
+   "lon": 101.5
+  },
+  {
+   "name": "Kuala Lumpur",
+   "lat": 3.14,
+   "lon": 101.69
+  },
+  {
+   "name": "Putrajaya",
+   "lat": 2.93,
+   "lon": 101.7
+  },
+  {
+   "name": "Seremban",
+   "lat": 2.73,
+   "lon": 101.94
+  },
+  {
+   "name": "Nilai",
+   "lat": 2.82,
+   "lon": 101.8
+  },
+  {
+   "name": "Port Dickson",
+   "lat": 2.52,
+   "lon": 101.8
+  },
+  {
+   "name": "Bahau",
+   "lat": 2.82,
+   "lon": 102.4
+  },
+  {
+   "name": "Melaka",
+   "lat": 2.2,
+   "lon": 102.25
+  },
+  {
+   "name": "Alor Gajah",
+   "lat": 2.38,
+   "lon": 102.21
+  },
+  {
+   "name": "Jasin",
+   "lat": 2.31,
+   "lon": 102.43
+  },
+  {
+   "name": "Johor Bahru",
+   "lat": 1.49,
+   "lon": 103.74
+  },
+  {
+   "name": "Iskandar Puteri",
+   "lat": 1.48,
+   "lon": 103.64
+  },
+  {
+   "name": "Skudai",
+   "lat": 1.54,
+   "lon": 103.66
+  },
+  {
+   "name": "Pasir Gudang",
+   "lat": 1.47,
+   "lon": 103.9
+  },
+  {
+   "name": "Kulai",
+   "lat": 1.66,
+   "lon": 103.6
+  },
+  {
+   "name": "Batu Pahat",
+   "lat": 1.85,
+   "lon": 102.93
+  },
+  {
+   "name": "Muar",
+   "lat": 2.04,
+   "lon": 102.57
+  },
+  {
+   "name": "Tangkak",
+   "lat": 2.27,
+   "lon": 102.55
+  },
+  {
+   "name": "Kluang",
+   "lat": 2.03,
+   "lon": 103.32
+  },
+  {
+   "name": "Segamat",
+   "lat": 2.51,
+   "lon": 102.82
+  },
+  {
+   "name": "Pontian",
+   "lat": 1.49,
+   "lon": 103.39
+  },
+  {
+   "name": "Kota Tinggi",
+   "lat": 1.74,
+   "lon": 103.9
+  },
+  {
+   "name": "Mersing",
+   "lat": 2.43,
+   "lon": 103.84
+  },
+  {
+   "name": "Kuantan",
+   "lat": 3.81,
+   "lon": 103.33
+  },
+  {
+   "name": "Temerloh",
+   "lat": 3.45,
+   "lon": 102.42
+  },
+  {
+   "name": "Bentong",
+   "lat": 3.52,
+   "lon": 101.91
+  },
+  {
+   "name": "Raub",
+   "lat": 3.79,
+   "lon": 101.86
+  },
+  {
+   "name": "Jerantut",
+   "lat": 3.94,
+   "lon": 102.36
+  },
+  {
+   "name": "Pekan",
+   "lat": 3.49,
+   "lon": 103.39
+  },
+  {
+   "name": "Kuala Lipis",
+   "lat": 4.19,
+   "lon": 102.05
+  },
+  {
+   "name": "Tanah Rata",
+   "lat": 4.47,
+   "lon": 101.38
+  },
+  {
+   "name": "Kuala Terengganu",
+   "lat": 5.33,
+   "lon": 103.14
+  },
+  {
+   "name": "Chukai",
+   "lat": 4.23,
+   "lon": 103.44
+  },
+  {
+   "name": "Dungun",
+   "lat": 4.76,
+   "lon": 103.42
+  },
+  {
+   "name": "Marang",
+   "lat": 5.2,
+   "lon": 103.2
+  },
+  {
+   "name": "Kota Bharu",
+   "lat": 6.13,
+   "lon": 102.24
+  },
+  {
+   "name": "Pasir Mas",
+   "lat": 6.05,
+   "lon": 102.14
+  },
+  {
+   "name": "Tumpat",
+   "lat": 6.2,
+   "lon": 102.17
+  },
+  {
+   "name": "Tanah Merah",
+   "lat": 5.8,
+   "lon": 102.15
+  },
+  {
+   "name": "Machang",
+   "lat": 5.77,
+   "lon": 102.22
+  },
+  {
+   "name": "Kuala Krai",
+   "lat": 5.53,
+   "lon": 102.2
+  },
+  {
+   "name": "Gua Musang",
+   "lat": 4.88,
+   "lon": 101.97
+  },
+  {
+   "name": "Pasir Puteh",
+   "lat": 5.83,
+   "lon": 102.4
+  },
+  {
+   "name": "Kuching",
+   "lat": 1.55,
+   "lon": 110.34
+  },
+  {
+   "name": "Kota Samarahan",
+   "lat": 1.46,
+   "lon": 110.49
+  },
+  {
+   "name": "Serian",
+   "lat": 1.17,
+   "lon": 110.57
+  },
+  {
+   "name": "Sri Aman",
+   "lat": 1.24,
+   "lon": 111.46
+  },
+  {
+   "name": "Betong",
+   "lat": 1.41,
+   "lon": 111.53
+  },
+  {
+   "name": "Sarikei",
+   "lat": 2.12,
+   "lon": 111.52
+  },
+  {
+   "name": "Sibu",
+   "lat": 2.29,
+   "lon": 111.83
+  },
+  {
+   "name": "Kapit",
+   "lat": 2.02,
+   "lon": 112.93
+  },
+  {
+   "name": "Mukah",
+   "lat": 2.9,
+   "lon": 112.09
+  },
+  {
+   "name": "Bintulu",
+   "lat": 3.17,
+   "lon": 113.04
+  },
+  {
+   "name": "Miri",
+   "lat": 4.4,
+   "lon": 113.99
+  },
+  {
+   "name": "Marudi",
+   "lat": 4.18,
+   "lon": 114.32
+  },
+  {
+   "name": "Limbang",
+   "lat": 4.75,
+   "lon": 115.0
+  },
+  {
+   "name": "Lawas",
+   "lat": 4.85,
+   "lon": 115.4
+  },
+  {
+   "name": "Labuan",
+   "lat": 5.28,
+   "lon": 115.24
+  },
+  {
+   "name": "Kota Kinabalu",
+   "lat": 5.98,
+   "lon": 116.07
+  },
+  {
+   "name": "Penampang",
+   "lat": 5.91,
+   "lon": 116.09
+  },
+  {
+   "name": "Tuaran",
+   "lat": 6.18,
+   "lon": 116.23
+  },
+  {
+   "name": "Papar",
+   "lat": 5.73,
+   "lon": 115.93
+  },
+  {
+   "name": "Beaufort",
+   "lat": 5.35,
+   "lon": 115.74
+  },
+  {
+   "name": "Tenom",
+   "lat": 5.12,
+   "lon": 115.95
+  },
+  {
+   "name": "Keningau",
+   "lat": 5.34,
+   "lon": 116.16
+  },
+  {
+   "name": "Ranau",
+   "lat": 5.96,
+   "lon": 116.66
+  },
+  {
+   "name": "Kota Belud",
+   "lat": 6.35,
+   "lon": 116.43
+  },
+  {
+   "name": "Kudat",
+   "lat": 6.89,
+   "lon": 116.84
+  },
+  {
+   "name": "Sandakan",
+   "lat": 5.84,
+   "lon": 118.12
+  },
+  {
+   "name": "Lahad Datu",
+   "lat": 5.03,
+   "lon": 118.33
+  },
+  {
+   "name": "Kunak",
+   "lat": 4.69,
+   "lon": 118.25
+  },
+  {
+   "name": "Semporna",
+   "lat": 4.48,
+   "lon": 118.61
+  },
+  {
+   "name": "Tawau",
+   "lat": 4.24,
+   "lon": 117.89
+  }
+ ]
+}
