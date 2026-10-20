@@ -13,7 +13,10 @@
 # A failed run never reaches the deploy job, so the last good file stays live.
 #
 # GFS: the 850 hPa wind and rain files are cached per 6-hourly cycle (cache-gfs), so each cycle is
-# downloaded once; older cycles are restored from the newest earlier cache and pruned by the job.
+# downloaded once. The newest saved snapshot is restored by prefix (hazemy-gfs-2...), the job
+# prunes cycles older than it needs, and the snapshot is saved under a key built from the newest
+# cycle actually present in the folder (hazemy-gfs-<cycle>-<run id>). The cache stays bounded by
+# the job's pruning; GitHub also evicts the oldest snapshots.
 #
 # GitHub disables scheduled workflows after 60 days without repository activity; re-enable them
 # under Actions -> HazeMY data if the published file stops updating.
@@ -54,18 +57,13 @@ jobs:
         with:
           path: cache
           key: hazemy-cams-${{ steps.day.outputs.day }}
-      - name: Newest GFS cycle
-        id: cycle
-        # Same 5 h publish lag and 6 h cycles as PUBLISH_LAG_H and CYCLE_H in hazemy/gfs.py.
-        run: |
-          shifted=$(date -u -d '-5 hours' '+%Y%m%d %H')
-          echo "cycle=${shifted% *}$(printf '%02d' $((10#${shifted#* } / 6 * 6)))" >> "$GITHUB_OUTPUT"
       - name: Restore the GFS downloads
-        uses: actions/cache@v4
+        # No exact key exists on purpose: the newest saved snapshot is restored by prefix.
+        uses: actions/cache/restore@v4
         with:
           path: cache-gfs
-          key: hazemy-gfs-${{ steps.cycle.outputs.cycle }}
-          restore-keys: hazemy-gfs-
+          key: hazemy-gfs-restore-${{ github.run_id }}
+          restore-keys: hazemy-gfs-2
       - name: Build hazemy.json (v1 and v2)
         env:
           ADS_API_KEY: ${{ secrets.ADS_API_KEY }}
@@ -73,6 +71,19 @@ jobs:
         run: >
           python -m hazemy --out site/v1/hazemy.json --out-v2 site/v2/hazemy.json
           --cache cache --gfs-cache cache-gfs
+      - name: Newest GFS cycle in the cache
+        id: cycle
+        # The cycle the job actually used (and kept after pruning), read from the file names
+        # gfs_YYYYMMDDHH_fNNN_kind.grib, not guessed from the clock.
+        run: |
+          newest=$(ls cache-gfs 2>/dev/null | sed -n 's/^gfs_\([0-9]\{10\}\)_.*\.grib$/\1/p' | sort | tail -n 1)
+          echo "cycle=${newest}" >> "$GITHUB_OUTPUT"
+      - name: Save the GFS downloads
+        if: steps.cycle.outputs.cycle != ''
+        uses: actions/cache/save@v4
+        with:
+          path: cache-gfs
+          key: hazemy-gfs-${{ steps.cycle.outputs.cycle }}-${{ github.run_id }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

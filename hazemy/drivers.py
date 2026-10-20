@@ -8,6 +8,7 @@ import numpy as np
 
 from hazemy import compute, gfs, gfs_extra
 from hazemy.common import PipelineError, floor_hours, myt_day_bounds
+from hazemy import trajectory
 from hazemy.trajectory import KM_PER_DEG_LAT
 
 PATH_BUFFER_KM = 25.0
@@ -26,6 +27,28 @@ def load_wind850(valid_times: list, newest: datetime, cache_dir: str, budget, fe
         (u, geometry), (v, _) = gfs_extra.decode_bundle(path, 2)
         fields[valid] = (u, v, geometry)
     return fields
+
+
+def load_trajectory_wind(now: datetime, newest: datetime, extra_times: set, cache_dir: str,
+                         budget, fetch, log=print) -> tuple:
+    """(fields, times, cycles, cycle used): the 850 hPa wind for the paths plus `extra_times`.
+
+    If the newest cycle is not completely on the bucket, the one before it is used, as for the
+    10 m wind.
+    """
+    last_error = None
+    for cycle in (newest, newest - timedelta(hours=gfs.CYCLE_H)):
+        cycles = trajectory.trajectory_cycles(cycle)
+        times = trajectory.slice_times(cycles, trajectory.start_time(now))
+        try:
+            fields = load_wind850(set(times) | extra_times, cycle, cache_dir, budget,
+                                  fetch, log)
+        except PipelineError as err:
+            last_error = err
+            log(f"GFS 850 hPa wind from cycle {cycle:%Y-%m-%d %H} UTC unusable: {err}")
+            continue
+        return fields, times, cycles, cycle
+    raise PipelineError(f"No usable GFS cycle for 850 hPa wind: {last_error}")
 
 
 def sample_wind(fields: dict, valid: datetime, lats, lons) -> tuple:

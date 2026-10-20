@@ -22,14 +22,17 @@ NEA_REGIONS = ("north", "south", "east", "west", "central")
 NEA_ATTRIBUTION = ("Contains information from PSI accessed on {date} from data.gov.sg which is "
                    "made available under the terms of the Singapore Open Data Licence version "
                    "1.0 https://data.gov.sg/open-data-licence")
-# 24-hr PM2.5 breakpoints (ug/m3 -> PSI) from NEA, "Computation of the Pollutant Standards Index
-# (PSI)", last updated March 2014:
+# 24-hr PM2.5 sub-index from NEA, "Computation of the Pollutant Standards Index (PSI)", last
+# updated March 2014:
 # http://www.haze.gov.sg/docs/default-source/faq/computation-of-the-pollutant-standards-index-(psi).pdf
 # Linked from https://www.nea.gov.sg/our-services/pollution-control/air-pollution/faqs
-# Segmented linear function through (concentration, PSI) points; the document's worked example
-# (40 ug/m3 -> 83) is a test. Above 500 ug/m3 the index is capped at 500.
-PSI_POINTS = ((0.0, 0), (12.0, 50), (55.0, 100), (150.0, 200), (250.0, 300), (350.0, 400),
-              (500.0, 500))
+# The concentration is rounded to an integer, then mapped linearly within its segment:
+# (first conc, last conc, first PSI, last PSI). Above 500 ug/m3 the index is capped at 500.
+# The document's worked example (40 ug/m3 -> 83) is a test. The Android app (Psi.kt) uses the
+# same method and must stay identical.
+PSI_SEGMENTS = ((0, 12, 0, 50), (13, 55, 51, 100), (56, 150, 101, 200), (151, 250, 201, 300),
+                (251, 350, 301, 400), (351, 500, 401, 500))
+PSI_CAP = 500
 
 
 def load_land_km():
@@ -46,13 +49,15 @@ def load_towns(path: str = TOWNS_PATH) -> list:
 
 def pm25_to_psi(pm25: float) -> int:
     """NEA PM2.5 sub-index of a 24 h mean concentration, as an integer (half up)."""
-    conc = max(float(pm25), 0.0)
-    if conc >= PSI_POINTS[-1][0]:
-        return PSI_POINTS[-1][1]
-    for (c0, i0), (c1, i1) in zip(PSI_POINTS, PSI_POINTS[1:]):
+    conc = int(round_half_up(max(float(pm25), 0.0)))
+    if conc > PSI_SEGMENTS[-1][1]:
+        return PSI_CAP
+    for c0, c1, i0, i1 in PSI_SEGMENTS:
         if conc <= c1:
-            return int(round_half_up((i1 - i0) / (c1 - c0) * (conc - c0) + i0 + 1e-9))
-    return PSI_POINTS[-1][1]
+            # Integer arithmetic, so exact halves round up as in the NEA example.
+            span = c1 - c0
+            return (2 * (i0 * span + (conc - c0) * (i1 - i0)) + span) // (2 * span)
+    return PSI_CAP
 
 
 def sg_flags(cells: list, land_km, radius_km: float = SG_RADIUS_KM) -> list:

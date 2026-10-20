@@ -67,8 +67,10 @@ def fetch_bundle(cycle: datetime, fhr: int, kind: str, budget, *, urlopen=None, 
     out = []
     for start, end, var in select_ranges(parse_idx_tail(idx.decode("ascii", "replace")),
                                          kind, fhr):
-        body = http_get(url, label=f"{label} {var}", budget=budget, log=log, ok=(206,),
+        body = http_get(url, label=f"{label} {var}", budget=budget, log=log, ok=(200, 206),
                         headers={"Range": f"bytes={start}-{end}"}, **extra)
+        # A 200 is accepted only when it is exactly the range asked for (a server that ignored
+        # the Range header sends the whole file, which fails this check).
         if len(body) != end - start + 1:
             raise PipelineError(f"{label} {var}: range returned {len(body)} bytes, "
                                 f"expected {end - start + 1}.")

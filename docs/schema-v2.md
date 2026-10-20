@@ -58,7 +58,10 @@ v2 = every v1 field (same meaning, same rules as schema.md) plus the additions b
 - **`sg`** (only on cells within ~30 km of Singapore land): tomorrow as PSI from the same CAMS
   24 h means as `tomorrow`, using NEA's official PM2.5 sub-index breakpoints. The breakpoints
   must be taken from an NEA/government source and cited in a comment with the URL. If they can't
-  be verified, omit `sg` and report it.
+  be verified, omit `sg` and report it. Method (NEA, same as the app's Psi.kt): round the
+  concentration to an integer; segments 0–12, 13–55, 56–150, 151–250, 251–350, 351–500 map to
+  PSI 0–50, 51–100, 101–200, 201–300, 301–400, 401–500, linear within a segment, rounded half
+  up; above 500 the PSI is 500 (40 ug/m3 -> 83).
 - **`drivers`** (every cell):
   - `rain_tonight_mm`: GFS total precipitation, 18:00 today to 06:00 tomorrow MYT, at the cell,
     1 decimal.
@@ -66,13 +69,20 @@ v2 = every v1 field (same meaning, same rules as schema.md) plus the additions b
     direction FROM (deg, integer), speed km/h integer.
   - `path_fire_count_72h`: FIRMS detections (same 72 h set as `fires_72h`) within 25 km of any
     point of `path48h`. `path_fire_province`: the province holding most of them, or null if
-    the count is 0. `path_fire_trend`: compare those detections' counts on the last 24 h vs the
+    the count is 0. `path_fire_province` may be null when detections are outside listed provinces
+    (count > 0, province null, e.g. all detections at sea). `path_fire_trend`: compare those detections' counts on the last 24 h vs the
     24 h before: "rising" if > 1.2×, "falling" if < 0.8×, else "steady"; null if count is 0.
 - **`path48h`**: back-trajectory of the air arriving at the cell centre now, at 850 hPa,
-  48 h back, 17 points every 3 h (index 0 = cell centre now, index 16 = 48 h ago),
-  lat/lon rounded to 2 decimals. Method: kinematic, GFS 850 hPa u/v from the f000 and f003
-  steps of the 8 most recent completed cycles (3-hourly slices), bilinear in space, linear in
-  time, 1 h integration steps (RK2). Stop early (shorter list) if the path leaves
+  48 h back, 17 points every 3 h (index 0 = cell centre at the generation time rounded down to
+  the hour, so index 8 = 24 h and index 16 = 48 h before that), lat/lon rounded to 2 decimals.
+  Method: kinematic, GFS 850 hPa u/v slices every 3 h, bilinear in space, linear in time, 1 h
+  integration steps (RK2). Slices: f000 and f003 of the 9 most recent completed cycles
+  (`gfs_traj_cycles_utc`), plus forecast steps (f006, f009, f012) of the newest cycle up to the
+  first at or after the start. A cycle is published about 5 h late, so the newest cycle lies 5
+  to 10 h before "now": the newest hours use forecast steps, not analyses. Nine cycles are
+  needed because the path reaches back to 43 h before the newest cycle at worst and 8 cycles
+  (f000/f003) only reach 42 h. If the newest cycle's files are not all on the bucket, the cycle
+  before it is used for the whole wind set. Stop early (shorter list) if the path leaves
   90–125 E, 12 S–14 N. GFS GRIB data per cycle is cached like CAMS so each cycle is downloaded
   once.
 - **`fires_daily`**: same provinces as `fires_72h` (top 5), `counts` = [48–72 h ago,

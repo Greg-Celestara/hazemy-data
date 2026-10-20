@@ -13,7 +13,7 @@ from hazemy.common import Budget, PipelineError
 from hazemy.job import run_job
 from tests.gribmaker import make_message
 from tests.test_data_sources import HEADER, row
-from tests.test_job import ENV, NOW, fake_retrieve, fake_urlopen, fake_wind
+from tests.test_job import ENV, NOW, FakeResponse, fake_retrieve, fake_urlopen, fake_wind
 
 CYCLE = datetime(2026, 10, 19, 6, tzinfo=timezone.utc)
 GEOM = {"ni": 91, "nj": 81, "lat_first": 20.0, "lon_first": 85.0, "di": 0.5, "dj": 0.5,
@@ -39,6 +39,16 @@ class Psi(unittest.TestCase):
 
     def test_negative_is_zero(self):
         self.assertEqual(singapore.pm25_to_psi(-1.0), 0)
+
+    def test_segment_edges_follow_the_nea_table(self):
+        cases = {12: 50, 13: 51, 55: 100, 56: 101, 150: 200, 151: 201, 250: 300, 251: 301,
+                 350: 400, 351: 401, 500: 500, 501: 500}
+        for conc, psi in cases.items():
+            self.assertEqual(singapore.pm25_to_psi(conc), psi, conc)
+
+    def test_concentration_is_rounded_to_an_integer_first(self):
+        self.assertEqual(singapore.pm25_to_psi(12.4), 50)  # rounds to 12
+        self.assertEqual(singapore.pm25_to_psi(12.5), 51)  # rounds to 13: a new segment
 
 
 class SingaporeCells(unittest.TestCase):
@@ -141,9 +151,56 @@ class Trajectory(unittest.TestCase):
 
     def test_cycles_and_times_cover_48_hours(self):
         cycles = trajectory.trajectory_cycles(CYCLE)
-        times = trajectory.slice_times(cycles)
+        start = CYCLE + timedelta(hours=10)
+        times = trajectory.slice_times(cycles, start)
         self.assertEqual(len(cycles), 9)
-        self.assertGreaterEqual((times[-1] - times[0]).total_seconds() / 3600, 48)
+        self.assertLessEqual(times[0], start - timedelta(hours=48))
+        self.assertGreaterEqual(times[-1], start)
+
+    def test_slices_continue_past_the_newest_cycle_with_forecast_steps(self):
+        cycles = trajectory.trajectory_cycles(CYCLE)
+        for hours in (5, 9, 10):
+            times = trajectory.slice_times(cycles, CYCLE + timedelta(hours=hours))
+            steps = {(b - a) for a, b in zip(times, times[1:])}
+            self.assertEqual(steps, {timedelta(hours=3)})
+            self.assertGreaterEqual(times[-1], CYCLE + timedelta(hours=hours))
+            self.assertLess(times[-1], CYCLE + timedelta(hours=hours + 3))
+
+    def test_start_is_the_generation_hour_rounded_down(self):
+        self.assertEqual(trajectory.start_time(NOW),
+                         datetime(2026, 10, 19, 10, tzinfo=timezone.utc))
+
+    def test_point_times_label_24h_and_48h_points(self):
+        start = trajectory.start_time(NOW)
+        labels = trajectory.point_times(start)
+        self.assertEqual((labels[0], labels[8], labels[16]),
+                         (start, start - timedelta(hours=24), start - timedelta(hours=48)))
+
+    def test_path_starts_now_and_integrates_the_wind_of_the_matching_hours(self):
+        # u grows 0.1 m/s per hour since the first slice, so displacement depends on the clock.
+        start = CYCLE + timedelta(hours=10)
+        times = trajectory.slice_times(trajectory.trajectory_cycles(CYCLE), start)
+        fields = {t: (np.full((81, 91), 0.1 * (t - times[0]).total_seconds() / 3600),
+                      np.zeros((81, 91)), GEOM) for t in times}
+        (path,) = trajectory.back_trajectories(fields, times, [0.0], [110.0], start)
+        self.assertEqual(path[0], (0.0, 110.0))
+
+        def km_west(point_index):
+            return (110.0 - path[point_index][1]) * trajectory.KM_PER_DEG_LAT
+
+        def expected_km(hours_back):
+            h0 = (start - times[0]).total_seconds() / 3600
+            lo, hi = h0 - hours_back, h0
+            return 0.1 * (hi ** 2 - lo ** 2) / 2 * 3.6  # integral of u(h) dh, km
+
+        self.assertAlmostEqual(km_west(8), expected_km(24), delta=0.5)
+        self.assertAlmostEqual(km_west(16), expected_km(48), delta=0.5)
+
+    def test_start_beyond_the_slices_raises(self):
+        times = grid_times()
+        with self.assertRaises(PipelineError):
+            trajectory.back_trajectories(const_fields(times, 1, 1), times, [0.0], [100.0],
+                                         times[-1] + timedelta(hours=3))
 
     def test_too_few_slices_raise(self):
         times = grid_times(10)
@@ -177,6 +234,12 @@ class PathFires(unittest.TestCase):
         stats = drivers.path_fire_stats(self.PATH, det([fire(8.0, 120.0, 1)]))
         self.assertEqual(stats, {"path_fire_province": None, "path_fire_count_72h": 0,
                                  "path_fire_trend": None})
+
+    def test_detections_outside_provinces_keep_the_count_with_a_null_province(self):
+        stats = drivers.path_fire_stats(self.PATH, det([fire(2.0, 102.0, 1)] * 2,
+                                                       provinces=[None, None]))
+        self.assertEqual((stats["path_fire_province"], stats["path_fire_count_72h"]), (None, 2))
+        self.assertEqual(stats["path_fire_trend"], "rising")
 
     def test_province_with_most_detections_wins(self):
         rows = [fire(2.0, 102.0, 1)] * 3
@@ -247,6 +310,44 @@ class Bundles(unittest.TestCase):
         with self.assertRaises(PipelineError):
             gfs_extra.select_ranges(gfs_extra.parse_idx_tail("1:0:d=x:TMP:2 m:anl:\n"), "w850", 0)
 
+    IDX = ("1:0:d=x:UGRD:850 mb:3 hour fcst:\n2:10:d=x:VGRD:850 mb:3 hour fcst:\n"
+           "3:20:d=x:TMP:2 m above ground:3 hour fcst:")
+
+    def fetch_with(self, status, body_for):
+        """fetch_bundle against a server that answers every range with `status`."""
+        class Res:
+            def __init__(self, status, body):
+                self.status, self.body = status, body
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def read(self):
+                return self.body
+
+        def urlopen(req, timeout=None):
+            if req.full_url.endswith(".idx"):
+                return Res(200, self.IDX.encode())
+            return Res(status, body_for(req.get_header("Range")))
+        return gfs_extra.fetch_bundle(CYCLE, 3, "w850", Budget(), urlopen=urlopen,
+                                      sleep=lambda s: None)
+
+    def test_range_answers_206_and_200_are_accepted_when_the_length_matches(self):
+        for status in (206, 200):
+            got = self.fetch_with(status, lambda rng: b"x" * 10)
+            self.assertEqual(got, b"x" * 20, status)
+
+    def test_a_200_with_the_whole_file_is_a_failure(self):
+        with self.assertRaises(PipelineError):
+            self.fetch_with(200, lambda rng: b"x" * 25)
+
+    def test_a_206_with_the_wrong_length_is_a_failure(self):
+        with self.assertRaises(PipelineError):
+            self.fetch_with(206, lambda rng: b"x" * 9)
+
     def test_each_bundle_is_fetched_once(self):
         calls = []
 
@@ -296,6 +397,42 @@ def fake_bundle_factory(calls):
     return fetch
 
 
+class TrajectoryWindFallback(unittest.TestCase):
+    NEWEST = datetime(2026, 10, 19, 0, tzinfo=timezone.utc)
+
+    def run_loader(self, tmp, broken):
+        calls = []
+        inner = fake_bundle_factory(calls)
+
+        def fetch(cycle, fhr, kind, budget, log=print):
+            if cycle in broken:
+                raise PipelineError(f"GFS {cycle:%d %H} not on the bucket")
+            return inner(cycle, fhr, kind, budget, log)
+        return drivers.load_trajectory_wind(NOW, self.NEWEST, set(), tmp, Budget(), fetch,
+                                            log=lambda line: None)
+
+    def test_newest_cycle_is_used_when_complete(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fields, times, cycles, used = self.run_loader(tmp, broken=())
+        self.assertEqual(used, self.NEWEST)
+        self.assertEqual(cycles[-1], self.NEWEST)
+        self.assertTrue(set(times) <= set(fields))
+        self.assertGreaterEqual(times[-1], trajectory.start_time(NOW))
+
+    def test_previous_cycle_is_used_when_the_newest_is_not_on_the_bucket(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fields, times, cycles, used = self.run_loader(tmp, broken=(self.NEWEST,))
+        self.assertEqual(used, self.NEWEST - timedelta(hours=6))
+        self.assertEqual(cycles[-1], used)
+        self.assertGreaterEqual(times[-1], trajectory.start_time(NOW))
+        self.assertTrue(set(times) <= set(fields))
+
+    def test_both_cycles_missing_raises(self):
+        broken = (self.NEWEST, self.NEWEST - timedelta(hours=6))
+        with tempfile.TemporaryDirectory() as tmp, self.assertRaises(PipelineError):
+            self.run_loader(tmp, broken=broken)
+
+
 class JobV2(unittest.TestCase):
     def setUp(self):
         self._dir = tempfile.TemporaryDirectory()
@@ -304,7 +441,9 @@ class JobV2(unittest.TestCase):
         self.calls = []
         self.lines = []
 
-    def run_it(self, csv_text=HEADER + row(0.5, 101.5) * 3 + row(2.0, 112.5), nea=None):
+    FIRES = HEADER + row(0.5, 101.5) * 3 + row(2.0, 112.5)
+
+    def run_it(self, csv_text=FIRES, nea=None):
         def urlopen(req, timeout=None):
             if "data.gov.sg" in req.full_url:
                 if nea is None:
@@ -381,20 +520,71 @@ class JobV2(unittest.TestCase):
         self.assertGreater(first, 0)
         self.assertEqual(len(self.calls), first)
 
-    def test_failed_bundle_keeps_both_published_files(self):
-        self.run_it(nea=nea_body())
-        before = self.raw(self.out, self.out2)
-
+    def run_with_broken_v2(self, previous):
+        """Rerun with failing GFS 850 bundles; `previous` is what the Pages URL serves."""
         def broken(*a, **k):
             raise PipelineError("GFS down")
+
+        def urlopen(req, timeout=None):
+            if "greg-celestara.github.io" in req.full_url:
+                if previous is None:
+                    raise OSError("Pages down")
+                return FakeResponse(previous)
+            return fake_urlopen(self.FIRES)(req)
         with tempfile.TemporaryDirectory() as fresh:
-            code = run_job(ENV, out=self.out, out_v2=self.out2, cache_dir=os.path.join(
+            return run_job(ENV, out=self.out, out_v2=self.out2, cache_dir=os.path.join(
                 self.root, "cache"), gfs_cache_dir=fresh, now_fn=lambda: NOW,
                 log=self.lines.append, retrieve=fake_retrieve, fetch_wind=fake_wind,
-                fetch_bundle=broken,
-                http={"urlopen": fake_urlopen(HEADER), "sleep": lambda s: None})
+                fetch_bundle=broken, http={"urlopen": urlopen, "sleep": lambda s: None})
+
+    def test_v2_failure_still_publishes_v1_and_restores_the_previous_v2(self):
+        self.run_it(nea=nea_body())
+        v1_before, v2_before = self.raw(self.out, self.out2)
+        os.remove(self.out)
+        os.remove(self.out2)
+        code = self.run_with_broken_v2(v2_before.decode())
+        self.assertEqual(code, 0)
+        self.assertEqual(self.raw(self.out, self.out2), (v1_before, v2_before))
+        self.assertTrue(any("v2 failed" in line for line in self.lines))
+        self.assertTrue(any("restored the previously published v2" in line
+                            for line in self.lines))
+
+    def test_v2_failure_and_no_previous_v2_gives_v1_only(self):
+        self.run_it(nea=nea_body())
+        v1_before = self.raw(self.out)[0]
+        os.remove(self.out)
+        os.remove(self.out2)
+        self.assertEqual(self.run_with_broken_v2(None), 0)
+        self.assertEqual(self.raw(self.out)[0], v1_before)
+        self.assertFalse(os.path.exists(self.out2))
+        self.assertTrue(any("publishing no v2 file" in line for line in self.lines))
+
+    def test_an_invalid_previous_v2_is_not_published(self):
+        self.run_it(nea=nea_body())
+        os.remove(self.out2)
+        self.assertEqual(self.run_with_broken_v2("not json"), 0)
+        self.assertTrue(os.path.exists(self.out))
+        self.assertFalse(os.path.exists(self.out2))
+
+    def test_v1_failure_still_exits_1_and_skips_v2(self):
+        def no_cams(run, max_lead_h, target, key):
+            raise PipelineError("ADS down")
+        self.out = os.path.join(self.root, "v1", "hazemy.json")
+        self.out2 = os.path.join(self.root, "v2", "hazemy.json")
+        code = run_job(ENV, out=self.out, out_v2=self.out2, cache_dir=os.path.join(
+            self.root, "cache"), gfs_cache_dir=os.path.join(self.root, "gfs"),
+            now_fn=lambda: NOW, log=self.lines.append, retrieve=no_cams, fetch_wind=fake_wind,
+            fetch_bundle=fake_bundle_factory(self.calls),
+            http={"urlopen": fake_urlopen(HEADER), "sleep": lambda s: None})
         self.assertEqual(code, 1)
-        self.assertEqual(self.raw(self.out, self.out2), before)
+        self.assertFalse(os.path.exists(self.out) or os.path.exists(self.out2))
+
+    def test_trajectory_wind_reaches_the_generation_hour_with_forecast_steps(self):
+        self.run_it(nea=nea_body())
+        newest = datetime(2026, 10, 19, 0, tzinfo=timezone.utc)
+        steps = {fhr for cycle, fhr, kind in self.calls if cycle == newest and kind == "w850"}
+        self.assertTrue({0, 3, 6, 9, 12} <= steps, steps)  # start 10:00 UTC = f010 -> up to f012
+        self.assertTrue(any("paths start 2026-10-19 10 UTC" in line for line in self.lines))
 
     def test_fire_fields_follow_the_detections(self):
         fires = HEADER + row(3.1, 101.6) * 4
