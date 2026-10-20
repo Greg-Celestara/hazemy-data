@@ -20,7 +20,9 @@ publishes it with GitHub Pages at
 4. Converts PM2.5 to the DOE API, assigns bands, validates the result against the contract
    (also: under 500 KB) and writes `site/v1/hazemy.json` atomically. **Any failure exits with
    code 1 before the file is touched**, and the workflow then skips the deploy, so the last good
-   file stays live.
+   file stays live. v1 never depends on v2: v1 is written first, and if building v2 fails the job
+   logs the error, copies the currently published v2 from GitHub Pages into `site/v2/` (no v2
+   file if that fails too) and still exits 0 so v1 is deployed.
 
 Cells: the 0.4 degree grid of the contract, kept only if the cell centre is within 50 km of
 Malaysian land. Towns come from `data/towns.json` (source noted inside the file).

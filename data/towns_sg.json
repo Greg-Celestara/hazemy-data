@@ -1,0 +1,180 @@
+{
+ "source": "Hand-compiled Singapore planning areas, centroid coordinates rounded to 0.001 degree from general geographic knowledge. nea_region is the nearest of NEA's five PSI region label locations (api-open.data.gov.sg v2 real-time psi regionMetadata).",
+ "towns": [
+  {
+   "name": "Ang Mo Kio",
+   "lat": 1.37,
+   "lon": 103.849,
+   "country": "SG",
+   "nea_region": "central"
+  },
+  {
+   "name": "Bedok",
+   "lat": 1.324,
+   "lon": 103.93,
+   "country": "SG",
+   "nea_region": "east"
+  },
+  {
+   "name": "Bishan",
+   "lat": 1.351,
+   "lon": 103.848,
+   "country": "SG",
+   "nea_region": "central"
+  },
+  {
+   "name": "Bukit Batok",
+   "lat": 1.349,
+   "lon": 103.749,
+   "country": "SG",
+   "nea_region": "west"
+  },
+  {
+   "name": "Bukit Merah",
+   "lat": 1.277,
+   "lon": 103.82,
+   "country": "SG",
+   "nea_region": "south"
+  },
+  {
+   "name": "Bukit Timah",
+   "lat": 1.329,
+   "lon": 103.802,
+   "country": "SG",
+   "nea_region": "central"
+  },
+  {
+   "name": "Choa Chu Kang",
+   "lat": 1.385,
+   "lon": 103.745,
+   "country": "SG",
+   "nea_region": "west"
+  },
+  {
+   "name": "Clementi",
+   "lat": 1.315,
+   "lon": 103.765,
+   "country": "SG",
+   "nea_region": "south"
+  },
+  {
+   "name": "Geylang",
+   "lat": 1.318,
+   "lon": 103.887,
+   "country": "SG",
+   "nea_region": "east"
+  },
+  {
+   "name": "Hougang",
+   "lat": 1.371,
+   "lon": 103.892,
+   "country": "SG",
+   "nea_region": "east"
+  },
+  {
+   "name": "Jurong East",
+   "lat": 1.333,
+   "lon": 103.742,
+   "country": "SG",
+   "nea_region": "west"
+  },
+  {
+   "name": "Jurong West",
+   "lat": 1.34,
+   "lon": 103.707,
+   "country": "SG",
+   "nea_region": "west"
+  },
+  {
+   "name": "Kallang",
+   "lat": 1.311,
+   "lon": 103.866,
+   "country": "SG",
+   "nea_region": "south"
+  },
+  {
+   "name": "Marine Parade",
+   "lat": 1.302,
+   "lon": 103.907,
+   "country": "SG",
+   "nea_region": "east"
+  },
+  {
+   "name": "Pasir Ris",
+   "lat": 1.373,
+   "lon": 103.949,
+   "country": "SG",
+   "nea_region": "east"
+  },
+  {
+   "name": "Punggol",
+   "lat": 1.405,
+   "lon": 103.902,
+   "country": "SG",
+   "nea_region": "east"
+  },
+  {
+   "name": "Queenstown",
+   "lat": 1.294,
+   "lon": 103.786,
+   "country": "SG",
+   "nea_region": "south"
+  },
+  {
+   "name": "Sembawang",
+   "lat": 1.449,
+   "lon": 103.82,
+   "country": "SG",
+   "nea_region": "north"
+  },
+  {
+   "name": "Sengkang",
+   "lat": 1.391,
+   "lon": 103.895,
+   "country": "SG",
+   "nea_region": "east"
+  },
+  {
+   "name": "Serangoon",
+   "lat": 1.355,
+   "lon": 103.867,
+   "country": "SG",
+   "nea_region": "central"
+  },
+  {
+   "name": "Tampines",
+   "lat": 1.353,
+   "lon": 103.945,
+   "country": "SG",
+   "nea_region": "east"
+  },
+  {
+   "name": "Toa Payoh",
+   "lat": 1.334,
+   "lon": 103.856,
+   "country": "SG",
+   "nea_region": "central"
+  },
+  {
+   "name": "Woodlands",
+   "lat": 1.437,
+   "lon": 103.787,
+   "country": "SG",
+   "nea_region": "north"
+  },
+  {
+   "name": "Yishun",
+   "lat": 1.43,
+   "lon": 103.835,
+   "country": "SG",
+   "nea_region": "north"
+  },
+  {
+   "name": "Downtown Core",
+   "lat": 1.287,
+   "lon": 103.852,
+   "country": "SG",
+   "nea_region": "south"
+  }
+ ]
+}

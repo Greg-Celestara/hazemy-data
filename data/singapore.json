@@ -1,0 +1,6 @@
+{
+ "source": "Hand-compiled outline of Singapore's main island, accurate to about 2 km, from general geographic knowledge. Used only to decide which grid cells lie within 50 km (coverage) or 30 km (PSI) of Singapore land, so a few km of error do not change any result. [lon, lat] pairs.",
+ "ring": [[103.62, 1.30], [103.63, 1.36], [103.68, 1.42], [103.74, 1.45], [103.83, 1.47],
+          [103.92, 1.44], [104.00, 1.42], [104.04, 1.36], [104.00, 1.32], [103.95, 1.30],
+          [103.87, 1.27], [103.82, 1.24], [103.75, 1.26], [103.68, 1.27]]
+}

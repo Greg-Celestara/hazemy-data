@@ -87,8 +87,10 @@ def fetch_wind_messages(cycle: datetime, fhr: int, budget, *, urlopen=None, slee
     idx = http_get(url + ".idx", label=label + " idx", budget=budget, log=log, **extra)
     out = {}
     for msg in select_wind(parse_idx(idx.decode("ascii", "replace"))):
-        body = http_get(url, label=f"{label} {msg.var}", budget=budget, log=log, ok=(206,),
+        body = http_get(url, label=f"{label} {msg.var}", budget=budget, log=log, ok=(200, 206),
                         headers={"Range": f"bytes={msg.start}-{msg.end}"}, **extra)
+        # A 200 is accepted only when it is exactly the range asked for (a server that ignored
+        # the Range header sends the whole file, which fails this check).
         if len(body) != msg.end - msg.start + 1:
             raise PipelineError(f"{label} {msg.var}: range returned {len(body)} bytes, "
                                 f"expected {msg.end - msg.start + 1}.")
