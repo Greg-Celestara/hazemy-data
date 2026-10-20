@@ -30,7 +30,12 @@ def firms_url(key: str, source: str) -> str:
 
 
 def parse_csv(text: str, source: str, now: datetime) -> list:
-    """[(lat, lon)] of detections in the last 72 h, low-confidence ones dropped.
+    """[(lat, lon)] of detections in the last 72 h, low-confidence ones dropped."""
+    return [(lat, lon) for lat, lon, _ in parse_rows(text, source, now)]
+
+
+def parse_rows(text: str, source: str, now: datetime) -> list:
+    """[(lat, lon, acquired_utc)] of detections in the last 72 h, low-confidence ones dropped.
 
     FIRMS answers an empty window with just the header, which gives an empty list. A body
     without the expected columns (e.g. an error message with HTTP 200) raises.
@@ -53,16 +58,22 @@ def parse_csv(text: str, source: str, now: datetime) -> list:
         # 'l' is VIIRS low confidence (mostly sun glint and hot ground); the portal drops it too.
         if row["confidence"].strip().lower() == "l" or not oldest < acquired <= newest:
             continue
-        points.append((lat, lon))
+        points.append((lat, lon, acquired))
     return points
 
 
 def fetch_detections(key: str, now: datetime, budget, *, log=print, **http) -> list:
+    rows = fetch_detection_rows(key, now, budget, log=log, **http)
+    return [(lat, lon) for lat, lon, _ in rows]
+
+
+def fetch_detection_rows(key: str, now: datetime, budget, *, log=print, **http) -> list:
+    """[(lat, lon, acquired_utc)] from all three VIIRS sources."""
     points = []
     for source in SOURCES:
         body = http_get(firms_url(key, source), label=f"FIRMS {source}", budget=budget, log=log,
                         **http)
-        found = parse_csv(body.decode("utf-8", "replace"), source, now)
+        found = parse_rows(body.decode("utf-8", "replace"), source, now)
         log(f"FIRMS {source}: {len(found)} detections in the last {WINDOW_H} h")
         points.extend(found)
     return points
@@ -90,3 +101,21 @@ def count_by_province(points: list, provinces: list, top: int = TOP_N) -> list:
         counts[(name, COUNTRY_CODES.get(country, country))] += 1
     ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0][0]))[:top]
     return [{"province": name, "country": country, "count": n} for (name, country), n in ranked]
+
+
+def locate_provinces(points: list, provinces: list) -> list:
+    """Per point (lat, lon): (province, country code) or None when outside every province.
+
+    Same spatial rule as count_by_province: a point in two border polygons takes the first.
+    """
+    located = [None] * len(points)
+    if not points:
+        return located
+    tree = STRtree([geom for _, _, geom in provinces])
+    pts = shapely.points([(lon, lat) for lat, lon in points])
+    point_idx, geom_idx = tree.query(pts, predicate="within")
+    for p, g in zip(point_idx.tolist(), geom_idx.tolist()):
+        if located[p] is None:
+            name, country, _ = provinces[g]
+            located[p] = (name, COUNTRY_CODES.get(country, country))
+    return located

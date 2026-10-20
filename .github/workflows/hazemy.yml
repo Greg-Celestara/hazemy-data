@@ -1,4 +1,4 @@
-# Builds site/v1/hazemy.json and publishes it with GitHub Pages.
+# Builds site/v1/hazemy.json and site/v2/hazemy.json and publishes them with GitHub Pages.
 #
 # Secrets (repo Settings -> Secrets and variables -> Actions): ADS_API_KEY, FIRMS_MAP_KEY.
 # Pages must be set to "GitHub Actions" as its source (Settings -> Pages).
@@ -11,6 +11,9 @@
 # hours cost a few MB of FIRMS and GFS traffic.
 #
 # A failed run never reaches the deploy job, so the last good file stays live.
+#
+# GFS: the 850 hPa wind and rain files are cached per 6-hourly cycle (cache-gfs), so each cycle is
+# downloaded once; older cycles are restored from the newest earlier cache and pruned by the job.
 #
 # GitHub disables scheduled workflows after 60 days without repository activity; re-enable them
 # under Actions -> HazeMY data if the published file stops updating.
@@ -51,11 +54,25 @@ jobs:
         with:
           path: cache
           key: hazemy-cams-${{ steps.day.outputs.day }}
-      - name: Build hazemy.json
+      - name: Newest GFS cycle
+        id: cycle
+        # Same 5 h publish lag and 6 h cycles as PUBLISH_LAG_H and CYCLE_H in hazemy/gfs.py.
+        run: |
+          shifted=$(date -u -d '-5 hours' '+%Y%m%d %H')
+          echo "cycle=${shifted% *}$(printf '%02d' $((10#${shifted#* } / 6 * 6)))" >> "$GITHUB_OUTPUT"
+      - name: Restore the GFS downloads
+        uses: actions/cache@v4
+        with:
+          path: cache-gfs
+          key: hazemy-gfs-${{ steps.cycle.outputs.cycle }}
+          restore-keys: hazemy-gfs-
+      - name: Build hazemy.json (v1 and v2)
         env:
           ADS_API_KEY: ${{ secrets.ADS_API_KEY }}
           FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
-        run: python -m hazemy --out site/v1/hazemy.json --cache cache
+        run: >
+          python -m hazemy --out site/v1/hazemy.json --out-v2 site/v2/hazemy.json
+          --cache cache --gfs-cache cache-gfs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
