@@ -11,6 +11,9 @@
 # hours cost a few MB of FIRMS and GFS traffic.
 #
 # A failed run never reaches the deploy job, so the last good file stays live.
+#
+# GitHub disables scheduled workflows after 60 days without repository activity; re-enable them
+# under Actions -> HazeMY data if the published file stops updating.
 
 name: HazeMY data
 
