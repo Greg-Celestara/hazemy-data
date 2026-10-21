@@ -444,7 +444,8 @@ class JobV2(unittest.TestCase):
 
     FIRES = HEADER + row(0.5, 101.5) * 3 + row(2.0, 112.5)
 
-    def run_it(self, csv_text=FIRES, nea=None, now=NOW, firms_down=False):
+    def run_it(self, csv_text=FIRES, nea=None, now=NOW, firms_down=False, retrieve=fake_retrieve,
+               bundle=None):
         def urlopen(req, timeout=None):
             if firms_down and "firms" in req.full_url:
                 raise urllib.error.URLError("Network is unreachable")
@@ -458,8 +459,8 @@ class JobV2(unittest.TestCase):
         code = run_job(ENV, out=self.out, out_v2=self.out2,
                        cache_dir=os.path.join(self.root, "cache"),
                        gfs_cache_dir=os.path.join(self.root, "gfs"), now_fn=lambda: now,
-                       log=self.lines.append, retrieve=fake_retrieve, fetch_wind=fake_wind,
-                       fetch_bundle=fake_bundle_factory(self.calls),
+                       log=self.lines.append, retrieve=retrieve, fetch_wind=fake_wind,
+                       fetch_bundle=bundle or fake_bundle_factory(self.calls),
                        http={"urlopen": urlopen, "sleep": lambda s: None})
         return code
 

@@ -5,7 +5,6 @@ import json
 import os
 from datetime import datetime, timezone
 
-import numpy as np
 import shapely
 from shapely.geometry import Polygon
 
@@ -66,15 +65,20 @@ def sg_flags(cells: list, land_km, radius_km: float = SG_RADIUS_KM) -> list:
             for _, _, lat, lon in cells]
 
 
-def cell_sg(series: dict, now: datetime) -> list:
-    """Per cell: the `sg` dict (tomorrow PSI from the same 24 h means as `tomorrow`)."""
-    day = compute.tomorrow_steps(now)
-    psi_day = [pm25_to_psi(v) for v in compute.mean_of(series, day)]
-    rolling = np.array([[pm25_to_psi(v) for v in compute.mean_of(series, compute.window_steps(e))]
-                        for e in day])
-    return [{"tomorrow_psi": psi_day[k], "tomorrow_psi_min": int(rolling[:, k].min()),
-             "tomorrow_psi_max": int(rolling[:, k].max()), "band": band(psi_day[k])}
-            for k in range(len(psi_day))]
+def cell_sg(series: dict, now: datetime, offsets: list) -> list:
+    """Per cell: the `sg` dict (tomorrow PSI from the same 24 h means as `tomorrow`).
+
+    `days_psi` has one entry per offset (1 = tomorrow), computed the same way.
+    """
+    day, lo, hi = compute.day_range(series, compute.tomorrow_steps(now), pm25_to_psi)
+    per_day = [(offset, compute.day_range(series, compute.day_steps(now, offset), pm25_to_psi))
+               for offset in offsets]
+    return [{"tomorrow_psi": day[k], "tomorrow_psi_min": int(lo[k]),
+             "tomorrow_psi_max": int(hi[k]), "band": band(day[k]),
+             "days_psi": [{"date": compute.day_date(now, offset), "psi": int(psi[k]),
+                           "psi_min": int(mn[k]), "psi_max": int(mx[k]), "band": band(psi[k])}
+                          for offset, (psi, mn, mx) in per_day]}
+            for k in range(len(day))]
 
 
 def parse_nea(text: str) -> dict:

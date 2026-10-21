@@ -51,6 +51,26 @@ def load_trajectory_wind(now: datetime, newest: datetime, extra_times: set, cach
     raise PipelineError(f"No usable GFS cycle for 850 hPa wind: {last_error}")
 
 
+def load_day_wind(now: datetime, offsets: list, newest: datetime, cache_dir: str, budget,
+                  fetch, log=print) -> dict:
+    """{offset: {valid: (u, v, geometry)}} of 850 hPa wind for those forecast days.
+
+    Per day: the newest cycle, then the one before it. A day neither cycle can supply is left
+    out (its wind is reported as null); it never stops the job.
+    """
+    out = {}
+    for offset in offsets:
+        steps = set(compute.day_steps(now, offset))
+        for cycle in (newest, newest - timedelta(hours=gfs.CYCLE_H)):
+            try:
+                out[offset] = load_wind850(steps, cycle, cache_dir, budget, fetch, log)
+                break
+            except PipelineError as err:
+                log(f"GFS 850 hPa wind for day +{offset} from cycle "
+                    f"{cycle:%Y-%m-%d %H} UTC unusable: {err}")
+    return out
+
+
 def sample_wind(fields: dict, valid: datetime, lats, lons) -> tuple:
     u, v, geometry = fields[valid]
     return gfs.bilinear(u, geometry, lats, lons), gfs.bilinear(v, geometry, lats, lons)
