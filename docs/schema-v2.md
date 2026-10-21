@@ -8,10 +8,16 @@ Nothing in it identifies a user. Model values are **model estimates**; Singapore
 v2 = every v1 field (same meaning, same rules as schema.md) plus the additions below.
 `"version": 2`.
 
+`sources.firms_updated_utc` is the v1 field (see schema.md): the fetch time of the detections used
+for `fires_72h`, `fires_daily`, `fire_bins` and the `path_fire_*` driver fields, or `null` when
+FIRMS was down and no saved copy under 24 h old existed. In that case those fields are as for
+zero detections (empty lists; `path_fire_count_72h` 0 with null province and trend).
+
 ```json
 {
   "version": 2,
   "generated_utc": "...", "sources": { "...v1 fields...": "",
+    "firms_updated_utc": "2026-10-20T03:35:00Z",
     "gfs_traj_cycles_utc": ["2026-10-18T00:00:00Z", "..."],
     "nea_updated_utc": "2026-10-20T03:00:00Z",
     "nea_attribution": "Contains information from PSI accessed on 20 Oct 2026 from data.gov.sg which is made available under the terms of the Singapore Open Data Licence version 1.0 https://data.gov.sg/open-data-licence" },

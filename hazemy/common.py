@@ -21,6 +21,10 @@ class PipelineError(Exception):
     """A failure that must stop the job before the published file is touched."""
 
 
+class RetriesExhausted(PipelineError):
+    """A server stayed unreachable or kept failing (5xx/429) through every attempt."""
+
+
 class Budget:
     """Download cap in bytes; add() refuses the download that would cross it."""
 
@@ -118,4 +122,4 @@ def http_get(url, *, label, budget, headers=None, ok=(200,), urlopen=urllib.requ
         if attempt < ATTEMPTS:
             log(f"{label}: attempt {attempt} failed ({reason}), retrying")
             sleep(WAITS_S[min(attempt - 1, len(WAITS_S) - 1)])
-    raise PipelineError(f"{label}: failed after {ATTEMPTS} attempts ({reason}).")
+    raise RetriesExhausted(f"{label}: failed after {ATTEMPTS} attempts ({reason}).")

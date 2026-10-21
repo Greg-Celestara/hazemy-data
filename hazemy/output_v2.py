@@ -12,7 +12,8 @@ TOP_KEYS = ["version", "generated_utc", "sources", "grid", "cells", "fires_72h",
             "fire_bins", "towns"]
 MAX_BINS = 1500
 TRENDS = {"rising", "falling", "steady"}
-V1_SOURCE_KEYS = {"cams_run_utc", "firms_fetched_utc", "gfs_run_utc", "attribution"}
+V1_SOURCE_KEYS = {"cams_run_utc", "firms_fetched_utc", "firms_updated_utc", "gfs_run_utc",
+                  "attribution"}
 
 
 def assemble(*, v1_parts: dict, cells: list, air: list, wind: list, sg: list, drivers: list,

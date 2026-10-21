@@ -136,10 +136,12 @@ def _build_v1(ctx, budget) -> tuple:
     cells = _cells(provinces, False)
     log(f"{len(cells)} cells within {gridmod.LAND_RADIUS_KM:.0f} km of Malaysia")
     air, wind, cams_run, gfs_run, _ = _cell_values(ctx, now, cells, budget)
-    rows = firms.fetch_detection_rows(env["FIRMS_MAP_KEY"], now, budget, log=log, **ctx["http"])
+    rows, firms_updated = firms.rows_with_fallback(
+        env["FIRMS_MAP_KEY"], now, ctx["now_fn"], budget, ctx["cache_dir"], log=log,
+        **ctx["http"])
     fires = firms.count_by_province([(r[0], r[1]) for r in rows], provinces)
     parts = {"generated": now, "cams_run": cams_run, "firms_fetched": ctx["now_fn"](),
-             "gfs_run": gfs_run}
+             "firms_updated": firms_updated, "gfs_run": gfs_run}
     doc = output.assemble(cells=cells, air=air, wind=wind, fires=fires, towns=load_towns(),
                           **parts)
     body = output.validate(doc)

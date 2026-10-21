@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import csv
 import io
+import json
+import os
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 import shapely
 from shapely.strtree import STRtree
 
-from hazemy.common import PipelineError, http_get
+from hazemy.common import PipelineError, RetriesExhausted, fmt, http_get, parse_time
 
 SOURCES = ("VIIRS_SNPP_NRT", "VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT")
 BBOX = (95, -6, 120, 8)  # west, south, east, north
@@ -21,6 +23,8 @@ TOP_N = 5
 COUNTRY_CODES = {"IDN": "ID", "MYS": "MY", "BRN": "BN"}
 REQUIRED_COLUMNS = ("latitude", "longitude", "acq_date", "acq_time", "confidence")
 CLOCK_SKEW = timedelta(hours=1)
+SAVED_NAME = "firms_last.json"
+MAX_SAVED_AGE = timedelta(hours=24)
 
 
 def firms_url(key: str, source: str) -> str:
@@ -77,6 +81,62 @@ def fetch_detection_rows(key: str, now: datetime, budget, *, log=print, **http) 
         log(f"FIRMS {source}: {len(found)} detections in the last {WINDOW_H} h")
         points.extend(found)
     return points
+
+
+def save_rows(cache_dir: str, rows: list, fetched: datetime) -> None:
+    """Keep the last good detections so a later FIRMS outage can reuse them."""
+    os.makedirs(cache_dir, exist_ok=True)
+    doc = {"fetched_utc": fmt(fetched),
+           "detections": [[lat, lon, fmt(at)] for lat, lon, at in rows]}
+    path = os.path.join(cache_dir, SAVED_NAME)
+    with open(path + ".tmp", "w") as fh:
+        json.dump(doc, fh, separators=(",", ":"))
+    os.replace(path + ".tmp", path)
+
+
+def load_saved_rows(cache_dir: str, now: datetime):
+    """(rows, fetched) from the saved copy if fetched within 24 h and readable, else None.
+
+    Detections that have since aged out of the 72 h window are dropped.
+    """
+    path = os.path.join(cache_dir, SAVED_NAME)
+    try:
+        with open(path) as fh:
+            doc = json.load(fh)
+        fetched = parse_time(doc["fetched_utc"])
+        rows = [(float(lat), float(lon), parse_time(at)) for lat, lon, at in doc["detections"]]
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    if not now - MAX_SAVED_AGE <= fetched <= now + CLOCK_SKEW:
+        return None
+    oldest = now - timedelta(hours=WINDOW_H)
+    return [r for r in rows if r[2] > oldest], fetched
+
+
+def rows_with_fallback(key: str, now: datetime, clock, budget, cache_dir: str, *,
+                       log=print, **http) -> tuple:
+    """(rows, time of those detections or None). A FIRMS outage is not fatal.
+
+    On success the rows are saved. On failure the saved copy is used when under 24 h old;
+    otherwise the result is no detections at all.
+    """
+    try:
+        rows = fetch_detection_rows(key, now, budget, log=log, **http)
+    except RetriesExhausted as err:  # bad keys and malformed replies stay fatal
+        log(f"WARNING: FIRMS fetch failed: {err}")
+        saved = load_saved_rows(cache_dir, now)
+        if saved is None:
+            log("FIRMS unavailable and no saved detections under 24 h old: publishing without "
+                "fires")
+            return [], None
+        log(f"FIRMS unavailable, using detections from {fmt(saved[1])}")
+        return saved
+    fetched = clock()
+    try:
+        save_rows(cache_dir, rows, fetched)
+    except OSError as err:
+        log(f"WARNING: could not save FIRMS detections to {cache_dir}: {err}")
+    return rows, fetched
 
 
 def count_by_province(points: list, provinces: list, top: int = TOP_N) -> list:

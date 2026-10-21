@@ -11,6 +11,7 @@ identifies a user. Every value is a **model estimate**, not a station reading.
   "sources": {
     "cams_run_utc": "2026-10-19T00:00:00Z",
     "firms_fetched_utc": "2026-10-19T10:35:00Z",
+    "firms_updated_utc": "2026-10-19T10:35:00Z",
     "gfs_run_utc": "2026-10-19T06:00:00Z",
     "attribution": "Contains modified Copernicus Atmosphere Monitoring Service information 2026; NASA FIRMS; NOAA GFS"
   },
@@ -27,6 +28,12 @@ identifies a user. Every value is a **model estimate**, not a station reading.
 ```
 
 Rules
+- `sources.firms_updated_utc` (added later, additive): when the fire detections in this file were
+  fetched. Normally equal to `firms_fetched_utc`. If FIRMS was unreachable, the job reuses its
+  last saved detections when they are under 24 h old and this is their fetch time; with no usable
+  saved copy `fires_72h` is `[]` and this is `null`. Clients may show "fire data from <time>"
+  when it is older than `generated_utc`, and must treat `null` as "no fire data". Older clients
+  ignore the field.
 - Grid covers Malaysia, lat 0.8–7.6 N, lon 99.6–119.6 E. Only cells whose centre is within
   ~50 km of Malaysian land are listed (`i` = lat index, `j` = lon index).
 - `now.pm25_24h`: mean CAMS surface PM2.5 (µg/m³) over the 24 h ending at the latest hour

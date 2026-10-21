@@ -3,6 +3,7 @@ import json
 import os
 import tempfile
 import unittest
+import urllib.error
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
@@ -443,8 +444,10 @@ class JobV2(unittest.TestCase):
 
     FIRES = HEADER + row(0.5, 101.5) * 3 + row(2.0, 112.5)
 
-    def run_it(self, csv_text=FIRES, nea=None):
+    def run_it(self, csv_text=FIRES, nea=None, now=NOW, firms_down=False):
         def urlopen(req, timeout=None):
+            if firms_down and "firms" in req.full_url:
+                raise urllib.error.URLError("Network is unreachable")
             if "data.gov.sg" in req.full_url:
                 if nea is None:
                     raise OSError("NEA down")
@@ -454,11 +457,41 @@ class JobV2(unittest.TestCase):
         self.out2 = os.path.join(self.root, "v2", "hazemy.json")
         code = run_job(ENV, out=self.out, out_v2=self.out2,
                        cache_dir=os.path.join(self.root, "cache"),
-                       gfs_cache_dir=os.path.join(self.root, "gfs"), now_fn=lambda: NOW,
+                       gfs_cache_dir=os.path.join(self.root, "gfs"), now_fn=lambda: now,
                        log=self.lines.append, retrieve=fake_retrieve, fetch_wind=fake_wind,
                        fetch_bundle=fake_bundle_factory(self.calls),
                        http={"urlopen": urlopen, "sleep": lambda s: None})
         return code
+
+    def test_firms_down_with_a_fresh_saved_copy_reuses_it(self):
+        self.assertEqual(self.run_it(), 0)
+        later = NOW + timedelta(hours=8)
+        self.assertEqual(self.run_it(now=later, firms_down=True), 0)
+        v1, v2 = self.read(self.out), self.read(self.out2)
+        stamp = "2026-10-19T10:30:00Z"
+        self.assertEqual((v1["sources"]["firms_updated_utc"], v2["sources"]["firms_updated_utc"]),
+                         (stamp, stamp))
+        self.assertEqual(v1["fires_72h"][0], {"province": "Riau", "country": "ID", "count": 9})
+        self.assertEqual(v2["fires_72h"], v1["fires_72h"])
+        self.assertIn(f"FIRMS unavailable, using detections from {stamp}", "\n".join(self.lines))
+
+    def assert_published_without_fires(self, **kwargs):
+        self.assertEqual(self.run_it(firms_down=True, **kwargs), 0)
+        v1, v2 = self.read(self.out), self.read(self.out2)
+        self.assertEqual(v1["fires_72h"], [])
+        self.assertIsNone(v1["sources"]["firms_updated_utc"])
+        self.assertIsNone(v2["sources"]["firms_updated_utc"])
+        self.assertEqual((v2["fires_72h"], v2["fires_daily"], v2["fire_bins"]), ([], [], []))
+        for cell in v2["cells"]:
+            self.assertEqual(cell["drivers"]["path_fire_count_72h"], 0)
+            self.assertIsNone(cell["drivers"]["path_fire_province"])
+
+    def test_firms_down_without_a_saved_copy_publishes_no_fires(self):
+        self.assert_published_without_fires()
+
+    def test_firms_down_with_a_stale_saved_copy_publishes_no_fires(self):
+        self.assertEqual(self.run_it(), 0)
+        self.assert_published_without_fires(now=NOW + timedelta(hours=25))
 
     def read(self, path):
         with open(path) as fh:

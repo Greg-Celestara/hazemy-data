@@ -203,6 +203,21 @@ class Failure(JobTest):
         self.assertIn("lacks", "\n".join(self.lines))
 
 
+class FirmsSaved(JobTest):
+    def test_success_saves_the_detections(self):
+        self.run_it(HEADER + row(0.5, 101.5))
+        with open(os.path.join(self.cache, "firms_last.json")) as fh:
+            saved = json.load(fh)
+        self.assertEqual(saved["fetched_utc"], "2026-10-19T10:30:00Z")
+        self.assertEqual(len(saved["detections"]), 3)
+        self.assertEqual(self.read()["sources"]["firms_updated_utc"], "2026-10-19T10:30:00Z")
+
+    def test_cams_failure_stays_fatal_even_with_firms_down(self):
+        def failing(run, lead, target, key):
+            raise RuntimeError("ADS down")
+        self.assertEqual(self.run_it(retrieve=failing), 1)
+
+
 class Validation(unittest.TestCase):
     def doc(self, **override):
         cells = gridmod.land_cells(gridmod.malaysia_land(gridmod.load_provinces()))[:2]
