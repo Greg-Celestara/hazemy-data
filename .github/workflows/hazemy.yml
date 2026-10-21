@@ -57,6 +57,14 @@ jobs:
         with:
           path: cache
           key: hazemy-cams-${{ steps.day.outputs.day }}
+      - name: Restore the last FIRMS detections
+        # After the CAMS restore on purpose: that archive may hold an older copy of this file.
+        # Restored by prefix; the newest snapshot wins. Used only if under 24 h old.
+        uses: actions/cache/restore@v4
+        with:
+          path: cache/firms_last.json
+          key: hazemy-firms-restore-${{ github.run_id }}
+          restore-keys: hazemy-firms-
       - name: Restore the GFS downloads
         # No exact key exists on purpose: the newest saved snapshot is restored by prefix.
         uses: actions/cache/restore@v4
@@ -84,6 +92,13 @@ jobs:
         with:
           path: cache-gfs
           key: hazemy-gfs-${{ steps.cycle.outputs.cycle }}-${{ github.run_id }}
+      - name: Save the FIRMS detections
+        # Unique key per run so the file is refreshed every hour (about 1.3 MB, one file).
+        if: hashFiles('cache/firms_last.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: cache/firms_last.json
+          key: hazemy-firms-${{ github.run_id }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

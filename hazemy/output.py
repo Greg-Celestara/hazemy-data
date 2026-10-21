@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import os
 
-from hazemy.common import PipelineError, fmt
+from hazemy.common import PipelineError, fmt, parse_time
 from hazemy.grid import GRID
 
 MAX_BYTES = 500_000
@@ -13,7 +13,8 @@ BASE_ATTRIBUTION = "Contains modified Copernicus Atmosphere Monitoring Service i
 ATTRIBUTION_TAIL = "; NASA FIRMS; NOAA GFS"
 
 
-def assemble(*, generated, cams_run, firms_fetched, gfs_run, cells, air, wind, fires, towns):
+def assemble(*, generated, cams_run, firms_fetched, gfs_run, cells, air, wind, fires, towns,
+             firms_updated=None):
     """The document dict; `cells` are (i, j, lat, lon), air and wind are parallel lists."""
     records = []
     for (i, j, _, _), a, w in zip(cells, air, wind):
@@ -24,6 +25,7 @@ def assemble(*, generated, cams_run, firms_fetched, gfs_run, cells, air, wind, f
         "version": 1,
         "generated_utc": fmt(generated),
         "sources": {"cams_run_utc": fmt(cams_run), "firms_fetched_utc": fmt(firms_fetched),
+                    "firms_updated_utc": fmt(firms_updated) if firms_updated else None,
                     "gfs_run_utc": fmt(gfs_run), "attribution": attribution},
         "grid": dict(GRID),
         "cells": records,
@@ -35,6 +37,18 @@ def assemble(*, generated, cams_run, firms_fetched, gfs_run, cells, air, wind, f
 def _need(cond: bool, message: str) -> None:
     if not cond:
         raise PipelineError(f"Output invalid: {message}")
+
+
+def check_firms_updated(sources: dict) -> None:
+    value = sources["firms_updated_utc"]
+    ok = value is None
+    if isinstance(value, str):
+        try:
+            parse_time(value)
+            ok = True
+        except ValueError:
+            pass
+    _need(ok, "sources.firms_updated_utc must be a timestamp or null")
 
 
 def _is_int(value) -> bool:
@@ -61,8 +75,9 @@ def validate(doc: dict) -> bytes:
     expected = ["version", "generated_utc", "sources", "grid", "cells", "fires_72h", "towns"]
     _need(list(doc) == expected, f"top-level keys {list(doc)}")
     _need(doc["version"] == 1 and doc["grid"] == GRID, "version or grid")
-    _need(set(doc["sources"]) == {"cams_run_utc", "firms_fetched_utc", "gfs_run_utc",
-                                  "attribution"}, "sources keys")
+    _need(set(doc["sources"]) == {"cams_run_utc", "firms_fetched_utc", "firms_updated_utc",
+                                  "gfs_run_utc", "attribution"}, "sources keys")
+    check_firms_updated(doc["sources"])
     _need(len(doc["cells"]) > 0, "no cells")
     seen = set()
     for cell in doc["cells"]:
