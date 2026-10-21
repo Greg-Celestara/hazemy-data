@@ -26,9 +26,10 @@ DEFAULT_CACHE = "cache"
 DEFAULT_GFS_CACHE = "cache-gfs"
 TOWNS_PATH = os.path.join(gridmod.DATA_DIR, "towns.json")
 PREV_RUN_LEAD_H = 24
-# One fixed span for the newest run, long enough for any hour of the day (63 h from 16:20 UTC),
-# so the cache filename is the same for every run of a day and ADS is asked once per run.
-NEWEST_RUN_LEAD_H = 72
+# One fixed span for the newest run, long enough for any hour of the day, so the cache filename
+# is the same for every run of a day and ADS is asked once per run. Day +3 ends at 111 h after
+# the 00 UTC run at the worst hour (the run is a day old, or today's run after 16:00 UTC).
+NEWEST_RUN_LEAD_H = 111
 
 
 def load_towns(path: str = TOWNS_PATH) -> list:
@@ -40,7 +41,8 @@ def cams_series(env, now, cells, cache_dir, budget, log, retrieve) -> tuple:
     """({valid: per-cell PM2.5}, newest run). Adds the previous run when the windows need it."""
     run = cams.expected_run(now)
     earliest = compute.earliest_needed(now)
-    needed = compute.lead_hours(run, now)
+    needed = max(compute.lead_hours(run, now),
+                 int((compute.last_forecast_time(now) - run) / timedelta(hours=1)))
     if needed > NEWEST_RUN_LEAD_H:
         raise PipelineError(f"CAMS windows need {needed} h of lead; the request covers "
                             f"{NEWEST_RUN_LEAD_H} h. Raise NEWEST_RUN_LEAD_H.")
@@ -179,27 +181,46 @@ def _build_v2(ctx, budget, shared) -> bytes:
     log(f"v2: paths start {start:%Y-%m-%d %H} UTC, GFS cycle {used:%Y-%m-%d %H} UTC")
     paths = trajectory.back_trajectories(fields, times, lats, lons, start)
     rain = drivers.rain_tonight(now, used, lats, lons, ctx["gfs_cache"], budget, fetch, log)
-    gfs_extra.prune_cache(ctx["gfs_cache"], used)
     w_today = drivers.wind850_means(fields, today_steps, lats, lons)
     w_tomorrow = drivers.wind850_means(fields, tomorrow_steps, lats, lons)
+    offsets = compute.forecast_offsets(series, now)
+    days = _forecast_days(ctx, budget, series, now, offsets, used, w_tomorrow,
+                          (lats, lons))
     det = drivers.Detections(rows, firms.locate_provinces([(r[0], r[1]) for r in rows],
                                                           provinces), now)
     per_driver = [{"rain_tonight_mm": rain[k], "wind850_today": w_today[k],
                    "wind850_tomorrow": w_tomorrow[k], **drivers.path_fire_stats(paths[k], det)}
                   for k in range(len(cells))]
-    sg_all = singapore.cell_sg(series, now)
+    sg_all = singapore.cell_sg(series, now, offsets)
     near_sg = singapore.sg_flags(cells, singapore.load_land_km())
     nea = singapore.fetch_nea(now, budget, log=log, **ctx["http"])
     fires = shared["fires"]
     doc = output_v2.assemble(
         v1_parts=parts, cells=cells, air=air, wind=wind,
         sg=[sg_all[k] if near_sg[k] else None for k in range(len(cells))],
-        drivers=per_driver, paths=[trajectory.rounded(p) for p in paths], fires=fires,
+        days=days, drivers=per_driver, paths=[trajectory.rounded(p) for p in paths], fires=fires,
         fires_daily=drivers.fires_daily(fires, det), bins=drivers.fire_bins(det), nea=nea,
         towns=load_towns_v2(), traj_cycles=tcycles, nea_attribution=singapore.attribution(now))
     body = output_v2.validate(doc)
     log(f"downloaded {budget.total} bytes in total")
     return body
+
+
+def _forecast_days(ctx, budget, series, now, offsets, used, w_tomorrow, coords) -> list:
+    """Per cell the `days` list: CAMS numbers plus 850 hPa wind (null when GFS has none)."""
+    lats, lons = coords
+    per_cell = compute.cell_days(series, now, offsets)
+    later = [o for o in offsets if o > 1]
+    day_fields = drivers.load_day_wind(now, later, used, ctx["gfs_cache"], budget,
+                                       ctx["fetch_bundle"], ctx["log"])
+    gfs_extra.prune_cache(ctx["gfs_cache"], used)
+    winds = {1: w_tomorrow}
+    for offset, loaded in day_fields.items():
+        winds[offset] = drivers.wind850_means(loaded, compute.day_steps(now, offset), lats, lons)
+    for k, days in enumerate(per_cell):
+        for offset, day in zip(offsets, days):
+            day["wind850"] = winds[offset][k] if offset in winds else None
+    return per_cell
 
 
 def load_towns_v2() -> list:

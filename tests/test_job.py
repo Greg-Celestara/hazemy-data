@@ -120,7 +120,7 @@ class Success(JobTest):
             runs.append((run.day, lead))
             fake_retrieve(run, lead, target, key)
         self.run_it(retrieve=spy)
-        self.assertEqual(runs, [(18, 24), (19, 72)])
+        self.assertEqual(runs, [(18, 24), (19, 111)])
 
     def test_late_run_asks_for_tomorrow_and_reuses_the_cache_at_another_hour(self):
         late = datetime(2026, 10, 19, 16, 20, tzinfo=timezone.utc)
@@ -138,10 +138,10 @@ class Success(JobTest):
         self.assertEqual((steps[0], steps[-1]), (datetime(2026, 10, 20, 18, tzinfo=timezone.utc),
                                                  datetime(2026, 10, 21, 15, tzinfo=timezone.utc)))
         self.assertEqual(compute.lead_hours(datetime(2026, 10, 19, tzinfo=timezone.utc), late), 63)
-        self.assertEqual(calls, [(18, 24), (19, 72)])
+        self.assertEqual(calls, [(18, 24), (19, 111)])
         self.now = later
         self.assertEqual(self.run_it(retrieve=spy), 0)
-        self.assertEqual(calls, [(18, 24), (19, 72)])
+        self.assertEqual(calls, [(18, 24), (19, 111)])
 
 
 class Failure(JobTest):

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date, timedelta
 
 from hazemy import output
 from hazemy.common import fmt
@@ -11,19 +12,20 @@ from hazemy.trajectory import BOX, POINTS
 TOP_KEYS = ["version", "generated_utc", "sources", "grid", "cells", "fires_72h", "fires_daily",
             "fire_bins", "towns"]
 MAX_BINS = 1500
+DAY_KEYS = ["date", "api", "api_min", "api_max", "band", "wind850"]
 TRENDS = {"rising", "falling", "steady"}
 V1_SOURCE_KEYS = {"cams_run_utc", "firms_fetched_utc", "firms_updated_utc", "gfs_run_utc",
                   "attribution"}
 
 
-def assemble(*, v1_parts: dict, cells: list, air: list, wind: list, sg: list, drivers: list,
-             paths: list, fires: list, fires_daily: list, bins: list, nea, towns: list,
-             traj_cycles: list, nea_attribution: str) -> dict:
+def assemble(*, v1_parts: dict, cells: list, air: list, wind: list, sg: list, days: list,
+             drivers: list, paths: list, fires: list, fires_daily: list, bins: list, nea,
+             towns: list, traj_cycles: list, nea_attribution: str) -> dict:
     """`v1_parts` are the arguments of output.assemble (generated, cams_run, ...)."""
     records = []
     for k, (i, j, _, _) in enumerate(cells):
         rec = {"i": i, "j": j, "now": air[k]["now"], "tomorrow": air[k]["tomorrow"],
-               "wind_today": wind[k]}
+               "days": days[k], "wind_today": wind[k]}
         if sg[k] is not None:
             rec["sg"] = sg[k]
         rec["drivers"] = drivers[k]
@@ -67,11 +69,42 @@ def _check_drivers(d: dict, where: str) -> None:
         need(d["path_fire_trend"] in TRENDS, f"{where} path_fire_trend")
 
 
+def _check_wind(w, where: str) -> None:
+    if w is None:
+        return
+    need = output._need
+    need(output._is_int(w["from_deg"]) and 0 <= w["from_deg"] < 360, f"{where} wind dir")
+    need(output._is_int(w["speed_kmh"]) and w["speed_kmh"] >= 0, f"{where} wind speed")
+
+
+def _check_days(cell: dict, where: str) -> None:
+    need = output._need
+    days, tom = cell["days"], cell["tomorrow"]
+    need(1 <= len(days) <= 3, f"{where} days length {len(days)}")
+    dates = [date.fromisoformat(d["date"]) for d in days]
+    need(all(b - a == timedelta(days=1) for a, b in zip(dates, dates[1:])), f"{where} day dates")
+    for n, d in enumerate(days):
+        need(list(d) == DAY_KEYS, f"{where} day keys")
+        need(all(output._is_int(d[k]) and 0 <= d[k] <= 500 for k in ("api", "api_min", "api_max")),
+             f"{where} day {n} api")
+        need(d["api_min"] <= d["api_max"] and d["band"] in range(1, 6), f"{where} day {n} range")
+        _check_wind(d["wind850"], f"{where} day {n}")
+    first = {k: days[0][k] for k in tom}
+    need(first == tom, f"{where} days[0] differs from tomorrow")
+    need(days[0]["wind850"] == cell["drivers"]["wind850_tomorrow"], f"{where} days[0] wind")
+    psi = (cell.get("sg") or {}).get("days_psi")
+    if psi is not None:
+        need([d["date"] for d in psi] == [d["date"] for d in days][:len(psi)], f"{where} psi dates")
+        need(all(0 <= d["psi_min"] <= d["psi"] <= d["psi_max"] <= 500 and d["band"] in range(1, 6)
+                 for d in psi), f"{where} days_psi")
+
+
 def _check_cell(cell: dict) -> None:
     where = f"cell ({cell['i']}, {cell['j']})"
     output._check_cell({k: cell[k] for k in ("i", "j", "now", "tomorrow", "wind_today")})
     _check_drivers(cell["drivers"], where)
     _check_path(cell["path48h"], where)
+    _check_days(cell, where)
     sg = cell.get("sg")
     if sg:
         need = output._need

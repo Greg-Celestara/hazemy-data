@@ -26,8 +26,17 @@ zero detections (empty lists; `path_fire_count_72h` 0 with null province and tre
     { "i": 6, "j": 5,
       "now": { "pm25_24h": 69.1, "api": 158, "band": 3 },
       "tomorrow": { "api": 121, "api_min": 121, "api_max": 155, "band": 3 },
+      "days": [
+        { "date": "2026-10-21", "api": 121, "api_min": 121, "api_max": 155, "band": 3,
+          "wind850": { "from_deg": 205, "speed_kmh": 26 } },
+        { "date": "2026-10-22", "api": 98, "api_min": 90, "api_max": 121, "band": 2,
+          "wind850": { "from_deg": 190, "speed_kmh": 20 } },
+        { "date": "2026-10-23", "api": 80, "api_min": 70, "api_max": 98, "band": 2,
+          "wind850": null }
+      ],
       "wind_today": { "from_deg": 162, "from_compass": "S", "speed_kmh": 2 },
-      "sg": { "tomorrow_psi": 118, "tomorrow_psi_min": 110, "tomorrow_psi_max": 140, "band": 3 },
+      "sg": { "tomorrow_psi": 118, "tomorrow_psi_min": 110, "tomorrow_psi_max": 140, "band": 3,
+        "days_psi": [ { "date": "2026-10-21", "psi": 118, "psi_min": 110, "psi_max": 140, "band": 3 } ] },
       "drivers": {
         "rain_tonight_mm": 6.2,
         "wind850_today": { "from_deg": 200, "speed_kmh": 18 },
@@ -68,6 +77,18 @@ zero detections (empty lists; `path_fire_count_72h` 0 with null province and tre
   concentration to an integer; segments 0–12, 13–55, 56–150, 151–250, 251–350, 351–500 map to
   PSI 0–50, 51–100, 101–200, 201–300, 301–400, 401–500, linear within a segment, rounded half
   up; above 500 the PSI is 500 (40 ug/m3 -> 83).
+- **`days`** (every cell, 1 to 3 entries, one per MYT calendar day: tomorrow, day +2, day +3;
+  an MYT day runs 16:00 UTC to 16:00 UTC). `date` is the MYT date. `api`, `api_min`, `api_max`,
+  `band` are computed exactly as `tomorrow` (24 h mean, rolling 24 h min/max), so `days[0]`
+  equals `tomorrow` and `days[0].wind850` equals `drivers.wind850_tomorrow`. `wind850` is the
+  GFS 850 hPa vector mean over that day (as `wind850_today`), or `null` when GFS has no usable
+  data for it. A day CAMS cannot cover completely is left out: the list is shorter, never padded
+  or extrapolated, and only trailing days are ever missing. Cells' `days` all have the same
+  dates. Existing fields (`tomorrow`, `drivers.wind850_tomorrow`) are unchanged for older apps.
+  The job asks CAMS for leads 0 to 111 h of the 00 UTC run in use (day +3 ends at most 111 h
+  after it; CAMS publishes to 120 h).
+- **`sg.days_psi`**: same days as `days` (a prefix of its dates), each
+  `{date, psi, psi_min, psi_max, band}` by the NEA method above. `tomorrow_psi*` unchanged.
 - **`drivers`** (every cell):
   - `rain_tonight_mm`: GFS total precipitation, 18:00 today to 06:00 tomorrow MYT, at the cell,
     1 decimal.
