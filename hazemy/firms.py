@@ -1,17 +1,19 @@
 """NASA FIRMS VIIRS NRT active fires: fetch, parse, count by admin-1 province."""
 from __future__ import annotations
 
+import contextlib
 import csv
 import io
 import json
 import os
+import socket
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 import shapely
 from shapely.strtree import STRtree
 
-from hazemy.common import PipelineError, RetriesExhausted, fmt, http_get, parse_time
+from hazemy.common import ATTEMPTS, PipelineError, RetriesExhausted, fmt, http_get, parse_time
 
 SOURCES = ("VIIRS_SNPP_NRT", "VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT")
 BBOX = (95, -6, 120, 8)  # west, south, east, north
@@ -25,6 +27,7 @@ REQUIRED_COLUMNS = ("latitude", "longitude", "acq_date", "acq_time", "confidence
 CLOCK_SKEW = timedelta(hours=1)
 SAVED_NAME = "firms_last.json"
 MAX_SAVED_AGE = timedelta(hours=24)
+IPV4_TIMEOUT_S = 60
 
 
 def firms_url(key: str, source: str) -> str:
@@ -71,12 +74,47 @@ def fetch_detections(key: str, now: datetime, budget, *, log=print, **http) -> l
     return [(lat, lon) for lat, lon, _ in rows]
 
 
+@contextlib.contextmanager
+def ipv4_only():
+    """Limit name lookup to IPv4 inside the block; the original lookup is always restored."""
+    original = socket.getaddrinfo
+
+    def getaddrinfo(host, port, family=0, *args, **kwargs):
+        return original(host, port, socket.AF_INET, *args, **kwargs)
+
+    socket.getaddrinfo = getaddrinfo
+    try:
+        yield
+    finally:
+        socket.getaddrinfo = original
+
+
+def get_with_ipv4_retry(url: str, source: str, budget, *, log=print, **http) -> bytes:
+    """http_get, plus one IPv4-only attempt (60 s, no retries) once all retries are exhausted.
+
+    Diagnostic for runners whose IPv6 route to FIRMS is broken. When the extra attempt also
+    fails, the original RetriesExhausted is raised so the saved-copy fallback runs as before.
+    """
+    label = f"FIRMS {source}"
+    try:
+        return http_get(url, label=label, budget=budget, log=log, **http)
+    except RetriesExhausted as exhausted:
+        try:
+            with ipv4_only():
+                body = http_get(url, label=label, budget=budget, log=log, attempts=1,
+                                timeout=IPV4_TIMEOUT_S, **http)
+        except PipelineError as err:
+            log(f"{label}: IPv4-only attempt failed ({type(err).__name__}: {err})")
+            raise exhausted from err
+        log(f"{label}: succeeded over IPv4 after {ATTEMPTS} failed attempts")
+        return body
+
+
 def fetch_detection_rows(key: str, now: datetime, budget, *, log=print, **http) -> list:
     """[(lat, lon, acquired_utc)] from all three VIIRS sources."""
     points = []
     for source in SOURCES:
-        body = http_get(firms_url(key, source), label=f"FIRMS {source}", budget=budget, log=log,
-                        **http)
+        body = get_with_ipv4_retry(firms_url(key, source), source, budget, log=log, **http)
         found = parse_rows(body.decode("utf-8", "replace"), source, now)
         log(f"FIRMS {source}: {len(found)} detections in the last {WINDOW_H} h")
         points.extend(found)

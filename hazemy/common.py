@@ -100,13 +100,13 @@ def require_env(env, names) -> None:
 
 
 def http_get(url, *, label, budget, headers=None, ok=(200,), urlopen=urllib.request.urlopen,
-             sleep=time.sleep, log=print) -> bytes:
+             sleep=time.sleep, log=print, attempts=ATTEMPTS, timeout=REQUEST_TIMEOUT_S) -> bytes:
     """GET with retries on network errors, 5xx and 429; other statuses fail at once."""
     reason = ""
-    for attempt in range(1, ATTEMPTS + 1):
+    for attempt in range(1, attempts + 1):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **(headers or {})})
-            with urlopen(req, timeout=REQUEST_TIMEOUT_S) as res:
+            with urlopen(req, timeout=timeout) as res:
                 body = res.read()
                 status = res.status
         except urllib.error.HTTPError as err:
@@ -119,7 +119,7 @@ def http_get(url, *, label, budget, headers=None, ok=(200,), urlopen=urllib.requ
         if status and status < 500 and status != 429:
             raise PipelineError(f"{label}: HTTP {status}.")
         reason = reason if status == 0 else f"HTTP {status}"
-        if attempt < ATTEMPTS:
+        if attempt < attempts:
             log(f"{label}: attempt {attempt} failed ({reason}), retrying")
             sleep(WAITS_S[min(attempt - 1, len(WAITS_S) - 1)])
-    raise RetriesExhausted(f"{label}: failed after {ATTEMPTS} attempts ({reason}).")
+    raise RetriesExhausted(f"{label}: failed after {attempts} attempts ({reason}).")
