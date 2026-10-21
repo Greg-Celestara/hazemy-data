@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import os
 
-from hazemy.common import PipelineError, fmt
+from hazemy.common import PipelineError, fmt, parse_time
 from hazemy.grid import GRID
 
 MAX_BYTES = 500_000
@@ -39,6 +39,18 @@ def _need(cond: bool, message: str) -> None:
         raise PipelineError(f"Output invalid: {message}")
 
 
+def check_firms_updated(sources: dict) -> None:
+    value = sources["firms_updated_utc"]
+    ok = value is None
+    if isinstance(value, str):
+        try:
+            parse_time(value)
+            ok = True
+        except ValueError:
+            pass
+    _need(ok, "sources.firms_updated_utc must be a timestamp or null")
+
+
 def _is_int(value) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
@@ -65,6 +77,7 @@ def validate(doc: dict) -> bytes:
     _need(doc["version"] == 1 and doc["grid"] == GRID, "version or grid")
     _need(set(doc["sources"]) == {"cams_run_utc", "firms_fetched_utc", "firms_updated_utc",
                                   "gfs_run_utc", "attribution"}, "sources keys")
+    check_firms_updated(doc["sources"])
     _need(len(doc["cells"]) > 0, "no cells")
     seen = set()
     for cell in doc["cells"]:

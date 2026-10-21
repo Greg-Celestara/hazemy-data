@@ -3,6 +3,7 @@ import json
 import os
 import tempfile
 import unittest
+import urllib.error
 from datetime import datetime, timezone
 
 import numpy as np
@@ -212,10 +213,54 @@ class FirmsSaved(JobTest):
         self.assertEqual(len(saved["detections"]), 3)
         self.assertEqual(self.read()["sources"]["firms_updated_utc"], "2026-10-19T10:30:00Z")
 
+    def run_with(self, urlopen, retrieve=fake_retrieve, now=None):
+        http = {"urlopen": urlopen, "sleep": lambda s: None}
+        self.out_v2 = os.path.join(self._dir.name, "site", "v2", "hazemy.json")
+        return run_job(ENV, out=self.out, cache_dir=self.cache,
+                       now_fn=lambda: now or self.now, log=self.lines.append,
+                       retrieve=retrieve, fetch_wind=fake_wind, http=http)
+
+    @staticmethod
+    def unreachable(only=None, body=HEADER):
+        def urlopen(req, timeout=None):
+            if only is None or only in req.full_url:
+                raise urllib.error.URLError("Network is unreachable")
+            return FakeResponse(body)
+        return urlopen
+
     def test_cams_failure_stays_fatal_even_with_firms_down(self):
         def failing(run, lead, target, key):
             raise RuntimeError("ADS down")
-        self.assertEqual(self.run_it(retrieve=failing), 1)
+        self.assertEqual(self.run_with(self.unreachable(), retrieve=failing), 1)
+        self.assertFalse(os.path.exists(self.out))
+
+    def test_firms_rejected_key_is_fatal_and_writes_nothing(self):
+        def rejected(req, timeout=None):
+            raise urllib.error.HTTPError(req.full_url, 401, "Unauthorized", {}, None)
+        self.assertEqual(self.run_with(rejected), 1)
+        self.assertFalse(os.path.exists(self.out))
+        self.assertFalse(os.path.exists(self.out_v2))
+
+    def test_one_product_exhausting_retries_uses_the_saved_copy_untouched(self):
+        self.run_it(HEADER + row(0.5, 101.5))
+        path = os.path.join(self.cache, "firms_last.json")
+        with open(path) as fh:
+            before = fh.read()
+        later = datetime(2026, 10, 19, 18, 30, tzinfo=timezone.utc)
+        self.assertEqual(self.run_with(self.unreachable("VIIRS_NOAA21_NRT"), now=later), 0)
+        with open(path) as fh:
+            self.assertEqual(fh.read(), before)
+        self.assertEqual(self.read()["sources"]["firms_updated_utc"], "2026-10-19T10:30:00Z")
+
+    def test_corrupt_or_empty_saved_copy_means_no_fires(self):
+        os.makedirs(self.cache)
+        for content in ("", "{not json", '{"fetched_utc": 5}'):
+            with open(os.path.join(self.cache, "firms_last.json"), "w") as fh:
+                fh.write(content)
+            self.assertEqual(self.run_with(self.unreachable()), 0)
+            doc = self.read()
+            self.assertEqual(doc["fires_72h"], [])
+            self.assertIsNone(doc["sources"]["firms_updated_utc"])
 
 
 class Validation(unittest.TestCase):

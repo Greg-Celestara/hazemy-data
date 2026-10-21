@@ -140,7 +140,7 @@ def _build_v1(ctx, budget) -> tuple:
         env["FIRMS_MAP_KEY"], now, ctx["now_fn"], budget, ctx["cache_dir"], log=log,
         **ctx["http"])
     fires = firms.count_by_province([(r[0], r[1]) for r in rows], provinces)
-    parts = {"generated": now, "cams_run": cams_run, "firms_fetched": ctx["now_fn"](),
+    parts = {"generated": now, "cams_run": cams_run, "firms_fetched": firms_updated or ctx["now_fn"](),
              "firms_updated": firms_updated, "gfs_run": gfs_run}
     doc = output.assemble(cells=cells, air=air, wind=wind, fires=fires, towns=load_towns(),
                           **parts)

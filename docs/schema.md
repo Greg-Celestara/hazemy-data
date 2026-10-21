@@ -29,7 +29,8 @@ identifies a user. Every value is a **model estimate**, not a station reading.
 
 Rules
 - `sources.firms_updated_utc` (added later, additive): when the fire detections in this file were
-  fetched. Normally equal to `firms_fetched_utc`. If FIRMS was unreachable, the job reuses its
+  fetched. Always equal to `firms_fetched_utc`, which is the fetch time of the detections used
+  (when no detections are available, `firms_fetched_utc` is the build time). If FIRMS was unreachable, the job reuses its
   last saved detections when they are under 24 h old and this is their fetch time; with no usable
   saved copy `fires_72h` is `[]` and this is `null`. Clients may show "fire data from <time>"
   when it is older than `generated_utc`, and must treat `null` as "no fire data". Older clients

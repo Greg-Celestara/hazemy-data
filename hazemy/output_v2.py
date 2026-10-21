@@ -98,6 +98,7 @@ def validate(doc: dict) -> bytes:
     need(V1_SOURCE_KEYS <= set(doc["sources"]) and ("nea" in doc) == (
         "nea_updated_utc" in doc["sources"] and "nea_attribution" in doc["sources"]),
         "sources keys")
+    output.check_firms_updated(doc["sources"])
     need(len(doc["cells"]) > 0, "no cells")
     seen = set()
     for cell in doc["cells"]:

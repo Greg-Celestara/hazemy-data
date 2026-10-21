@@ -107,7 +107,7 @@ def load_saved_rows(cache_dir: str, now: datetime):
         rows = [(float(lat), float(lon), parse_time(at)) for lat, lon, at in doc["detections"]]
     except (OSError, ValueError, KeyError, TypeError):
         return None
-    if not now - MAX_SAVED_AGE <= fetched <= now + CLOCK_SKEW:
+    if not now - MAX_SAVED_AGE < fetched <= now + CLOCK_SKEW:
         return None
     oldest = now - timedelta(hours=WINDOW_H)
     return [r for r in rows if r[2] > oldest], fetched
