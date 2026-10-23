@@ -525,7 +525,9 @@ class JobV2(unittest.TestCase):
         by_key = {(c["i"], c["j"]): c for c in v2["cells"]}
         for c in v1["cells"]:
             v2c = by_key[(c["i"], c["j"])]
-            self.assertEqual({k: v2c[k] for k in c}, c)
+            same = {k: v2c[k] for k in c}
+            same["now"] = {k: v for k, v in same["now"].items() if k != "weather"}  # added in v1.4
+            self.assertEqual(same, c)
 
     def test_sg_only_on_cells_near_singapore(self):
         self.run_it(nea=nea_body())
