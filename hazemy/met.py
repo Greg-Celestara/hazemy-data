@@ -38,7 +38,8 @@ STATE_ALIASES = {"Pulau Pinang": "Penang", "N. Sembilan": "Negeri Sembilan",
                  "N.Sembilan": "Negeri Sembilan", "Malacca": "Melaka"}
 NO_ADVISORY = ("no advisory", "tiada nasihat")
 TYPE_KEYWORDS = (("thunderstorm", ("thunderstorm", "ribut petir")),
-                 ("heavy_rain", ("heavy rain", "hujan lebat")),
+                 ("heavy_rain", ("heavy rain", "hujan lebat", "continuous rain",
+                                 "hujan berterusan")),
                  ("strong_wind", ("strong wind", "angin kencang")),
                  ("heat", ("hot weather", "cuaca panas", "heat")),
                  ("cyclone", ("cyclone", "siklon")))
@@ -84,7 +85,7 @@ def parse_forecast(rows: list, wanted: set) -> dict:
         entry = found.setdefault(loc["location_id"], {"name": loc["location_name"], "days": []})
         entry["days"].append({out: row.get(src) for out, src in DAY_FIELDS})
     for entry in found.values():
-        entry["days"].sort(key=lambda d: d["date"])
+        entry["days"].sort(key=lambda d: d["date"] or "")
     return found
 
 
@@ -98,7 +99,11 @@ def town_met(match, saved: dict, now: datetime):
         return None
     wanted = {(now.astimezone(MYT) + timedelta(days=k)).date().isoformat()
               for k in range(FORECAST_DAYS)}
-    days = [d for d in entry["days"] if d["date"] in wanted]
+    days, seen = [], set()
+    for day in entry["days"]:
+        if day["date"] in wanted and day["date"] not in seen:  # null or repeated dates dropped
+            seen.add(day["date"])
+            days.append(day)
     if not days:
         return None
     return {"place": entry["name"], "id": place["id"], "km": round(km, 1), "days": days}
@@ -172,7 +177,19 @@ def warning_states(text_en, text_bm) -> list:
 
 
 def _with_offset(text):
-    return None if not text else text + "+08:00"
+    """The timestamp with an offset: +08:00 (MYT) is added only when it has none.
+
+    Raises ValueError when the result is not an ISO timestamp.
+    """
+    if not text:
+        return None
+    text = str(text)
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    elif not re.search(r"[+-]\d\d:?\d\d$", text[10:]):
+        text += "+08:00"
+    datetime.fromisoformat(text)
+    return text
 
 
 def parse_warning(row: dict):
@@ -196,9 +213,19 @@ def parse_warning(row: dict):
             "states": warning_states(row.get("text_en"), row.get("text_bm"))}
 
 
-def parse_warnings(rows: list) -> list:
-    parsed = (parse_warning(r) for r in rows)
-    return [w for w in parsed if w is not None]
+def parse_warnings(rows: list, log=print) -> list:
+    """Parsed warnings; a row that cannot be parsed is dropped and logged, the rest are kept."""
+    out = []
+    for row in rows:
+        try:
+            parsed = parse_warning(row)
+        except ValueError as err:
+            title = (row.get("warning_issue") or {}).get("title_en")
+            log(f"WARNING: dropping MetMalaysia warning {title!r}: bad timestamp ({err})")
+            continue
+        if parsed is not None:
+            out.append(parsed)
+    return out
 
 
 def unexpired(warnings: list, now: datetime) -> list:
@@ -263,7 +290,7 @@ def refresh_warnings(now: datetime, budget, state: dict, log, http: dict) -> lis
     """Current warnings from the feed, else the last good copy; never raises."""
     try:
         warnings = parse_warnings(_fetch_json(WARNING_URL, "MetMalaysia warnings", budget, log,
-                                              http))
+                                              http), log)
     except (PipelineError, KeyError, TypeError, ValueError) as err:
         log(f"WARNING: MetMalaysia warnings failed: {err}")
         warnings = state.get("warnings", {}).get("items", [])

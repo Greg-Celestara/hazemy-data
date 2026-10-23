@@ -131,6 +131,18 @@ class Forecast(unittest.TestCase):
         out = met.town_met(({"id": "Ds001"}, 1.0), saved, late)
         self.assertEqual([d["date"] for d in out["days"]], ["2026-10-28", "2026-10-29"])
 
+    def test_null_and_repeated_dates_are_dropped_keeping_the_first(self):
+        rows = self.rows()
+        first = next(r for r in rows if r["location"]["location_id"] == "Ds001"
+                     and r["date"] == "2026-10-24")
+        repeat = dict(first, summary_forecast="SECOND COPY")
+        null_date = dict(first, date=None)
+        saved = met.parse_forecast(rows + [repeat, null_date], {"Ds001"})
+        out = met.town_met(({"id": "Ds001", "name": "x"}, 1.0), saved, NOW)
+        dates = [d["date"] for d in out["days"]]
+        self.assertEqual(dates, ["2026-10-23", "2026-10-24", "2026-10-25", "2026-10-26"])
+        self.assertEqual(out["days"][1]["summary"], first["summary_forecast"])
+
     def test_no_match_or_no_feed_rows_gives_no_met(self):
         self.assertIsNone(met.town_met(None, {}, NOW))
         self.assertIsNone(met.town_met(({"id": "Tn999"}, 1.0), {}, NOW))
@@ -253,6 +265,47 @@ class Warnings(unittest.TestCase):
         self.assertEqual(len(met.unexpired(warnings, evening)), 1)
         after = datetime(2026, 10, 26, 16, 0, tzinfo=timezone.utc)  # 27 Oct 00:00 MYT
         self.assertEqual(met.unexpired(warnings, after), [])
+
+    def rain_row(self, title_en, heading_en, heading_bm, title_bm):
+        row = warning_rows()[3]
+        row["warning_issue"] = dict(row["warning_issue"], title_en=title_en, title_bm=title_bm)
+        row["heading_en"], row["heading_bm"] = heading_en, heading_bm
+        return row
+
+    def test_continuous_rain_is_heavy_rain_at_alert_level(self):
+        row = self.rain_row("Continuous Rain Warning", "ALERT LEVEL CONTINUOUS RAIN WARNING",
+                            "AMARAN HUJAN BERTERUSAN TAHAP WASPADA", "Amaran Hujan Berterusan")
+        out = met.parse_warning(row)
+        self.assertEqual((out["type"], out["level"]), ("heavy_rain", "alert"))
+
+    def test_continuous_rain_at_danger_level(self):
+        row = self.rain_row("Continuous Rain Warning", "DANGER LEVEL CONTINUOUS RAIN WARNING",
+                            "AMARAN HUJAN BERTERUSAN TAHAP BAHAYA", "Amaran Hujan Berterusan")
+        out = met.parse_warning(row)
+        self.assertEqual((out["type"], out["level"]), ("heavy_rain", "danger"))
+
+    def test_severe_continuous_rain_in_malay_only(self):
+        row = self.rain_row("Rain", "WARNING", "AMARAN HUJAN BERTERUSAN TAHAP BURUK",
+                            "Amaran Hujan Berterusan")
+        out = met.parse_warning(row)
+        self.assertEqual((out["type"], out["level"]), ("heavy_rain", "severe"))
+
+    def test_a_timestamp_with_an_offset_keeps_it(self):
+        row = warning_rows()[3]
+        row["valid_to"] = "2026-10-27T00:00:00+08:00"
+        row["valid_from"] = "2026-10-24T00:00:00Z"
+        out = met.parse_warning(row)
+        self.assertEqual(out["valid_to"], "2026-10-27T00:00:00+08:00")
+        self.assertEqual(out["valid_from"], "2026-10-24T00:00:00+00:00")
+
+    def test_one_unparseable_timestamp_drops_only_that_warning_and_logs_it(self):
+        rows = warning_rows()
+        rows[3]["valid_to"] = "next Tuesday"
+        logged = []
+        out = met.parse_warnings(rows, log=logged.append)
+        self.assertEqual(len(out), len(met.parse_warnings(warning_rows())) - 1)
+        self.assertEqual(len(logged), 1)
+        self.assertIn("next Tuesday", logged[0])
 
     def test_null_validity_is_dropped(self):
         row = warning_rows()[3]
