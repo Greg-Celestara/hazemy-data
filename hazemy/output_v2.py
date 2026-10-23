@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from hazemy import output
 from hazemy.common import fmt
@@ -10,9 +10,17 @@ from hazemy.grid import GRID
 from hazemy.trajectory import BOX, POINTS
 
 TOP_KEYS = ["version", "generated_utc", "sources", "grid", "cells", "fires_72h", "fires_daily",
-            "fire_bins", "towns"]
+            "fire_bins", "towns", "warnings"]
 MAX_BINS = 1500
-DAY_KEYS = ["date", "api", "api_min", "api_max", "band", "wind850"]
+DAY_KEYS = ["date", "api", "api_min", "api_max", "band", "wind850", "weather"]
+NOW_WEATHER_KEYS = ["temp_c", "rh", "feels_c", "rain_mm_3h"]
+SPAN_WEATHER_KEYS = ["temp_min_c", "temp_max_c", "feels_max_c", "rain_mm"]
+WARNING_KEYS = ["id", "type", "level", "marine", "issued", "valid_from", "valid_to", "title_en",
+                "title_bm", "text_en", "text_bm", "instruction_en", "instruction_bm", "states"]
+MET_DAY_KEYS = ["date", "morning", "afternoon", "night", "summary", "when", "min_c", "max_c"]
+MET_MAX_KM = 25.0
+# v1 stays under output.MAX_BYTES (500 KB); weather and Met add about 230 KB to v2.
+MAX_BYTES = 700_000
 TRENDS = {"rising", "falling", "steady"}
 V1_SOURCE_KEYS = {"cams_run_utc", "firms_fetched_utc", "firms_updated_utc", "gfs_run_utc",
                   "attribution"}
@@ -20,16 +28,22 @@ V1_SOURCE_KEYS = {"cams_run_utc", "firms_fetched_utc", "firms_updated_utc", "gfs
 
 def assemble(*, v1_parts: dict, cells: list, air: list, wind: list, sg: list, days: list,
              drivers: list, paths: list, fires: list, fires_daily: list, bins: list, nea,
-             towns: list, traj_cycles: list, nea_attribution: str) -> dict:
-    """`v1_parts` are the arguments of output.assemble (generated, cams_run, ...)."""
+             towns: list, traj_cycles: list, nea_attribution: str, weather: dict,
+             met_updated=None, warnings: list = ()) -> dict:
+    """`v1_parts` are the arguments of output.assemble (generated, cams_run, ...).
+
+    `weather` is weather.cell_weather(): per cell now, today and per-day values; the new
+    fields are added after the existing keys of each object.
+    """
     records = []
     for k, (i, j, _, _) in enumerate(cells):
-        rec = {"i": i, "j": j, "now": air[k]["now"], "tomorrow": air[k]["tomorrow"],
-               "days": days[k], "wind_today": wind[k]}
+        rec = {"i": i, "j": j, "now": {**air[k]["now"], "weather": weather["now"][k]},
+               "tomorrow": air[k]["tomorrow"], "days": days[k], "wind_today": wind[k]}
         if sg[k] is not None:
             rec["sg"] = sg[k]
         rec["drivers"] = drivers[k]
         rec["path48h"] = paths[k]
+        rec["today_weather"] = weather["today"][k]
         records.append(rec)
     base = output.assemble(cells=cells, air=air, wind=wind, fires=fires, towns=towns,
                            **v1_parts)
@@ -42,7 +56,10 @@ def assemble(*, v1_parts: dict, cells: list, air: list, wind: list, sg: list, da
         doc["nea"] = nea
         doc["sources"]["nea_updated_utc"] = nea["updated_utc"]
         doc["sources"]["nea_attribution"] = nea_attribution
+    if met_updated is not None:
+        doc["sources"]["met_updated_utc"] = fmt(met_updated)
     doc["towns"] = towns
+    doc["warnings"] = list(warnings)
     return doc
 
 
@@ -89,6 +106,7 @@ def _check_days(cell: dict, where: str) -> None:
              f"{where} day {n} api")
         need(d["api_min"] <= d["api_max"] and d["band"] in range(1, 6), f"{where} day {n} range")
         _check_wind(d["wind850"], f"{where} day {n}")
+        _check_weather(d["weather"], SPAN_WEATHER_KEYS, f"{where} day {n}")
     first = {k: days[0][k] for k in tom}
     need(first == tom, f"{where} days[0] differs from tomorrow")
     need(days[0]["wind850"] == cell["drivers"]["wind850_tomorrow"], f"{where} days[0] wind")
@@ -99,9 +117,31 @@ def _check_days(cell: dict, where: str) -> None:
                  for d in psi), f"{where} days_psi")
 
 
+def _check_weather(w: dict, keys: list, where: str) -> None:
+    """Each field is a number of the right kind and range, or null."""
+    need = output._need
+    need(isinstance(w, dict) and list(w) == keys, f"{where} weather keys")
+    for key, value in w.items():
+        if value is None:
+            continue
+        if key == "rh":
+            ok = output._is_int(value) and 0 <= value <= 100
+        elif key in ("feels_c", "feels_max_c"):
+            ok = output._is_int(value) and -90 <= value <= 90
+        elif key.startswith("rain"):
+            ok = isinstance(value, float) and value >= 0
+        else:
+            ok = isinstance(value, float) and -90 <= value <= 90
+        need(ok, f"{where} {key}={value!r}")
+
+
 def _check_cell(cell: dict) -> None:
     where = f"cell ({cell['i']}, {cell['j']})"
-    output._check_cell({k: cell[k] for k in ("i", "j", "now", "tomorrow", "wind_today")})
+    now = {k: v for k, v in cell["now"].items() if k != "weather"}
+    output._check_cell({"i": cell["i"], "j": cell["j"], "now": now, "tomorrow": cell["tomorrow"],
+                        "wind_today": cell["wind_today"]})
+    _check_weather(cell["now"]["weather"], NOW_WEATHER_KEYS, f"{where} now")
+    _check_weather(cell["today_weather"], SPAN_WEATHER_KEYS, f"{where} today")
     _check_drivers(cell["drivers"], where)
     _check_path(cell["path48h"], where)
     _check_days(cell, where)
@@ -120,8 +160,31 @@ def _check_nea(nea: dict) -> None:
         output._need(region["band"] in range(1, 6) and region["psi_24h"] >= 0, "nea region")
 
 
+def _check_met(town: dict) -> None:
+    need = output._need
+    met = town.get("met")
+    if met is None:
+        return
+    where = f"town {town['name']} met"
+    need(town["country"] == "MY" and met["id"][:2] in ("Tn", "Ds"), f"{where} place")
+    need(0 <= met["km"] <= MET_MAX_KM, f"{where} km")
+    dates = [d["date"] for d in met["days"]]
+    need(1 <= len(dates) <= 4 and dates == sorted(set(dates)), f"{where} dates")
+    need(all(list(d) == MET_DAY_KEYS for d in met["days"]), f"{where} day keys")
+
+
+def _check_warning(w: dict) -> None:
+    need = output._need
+    need(list(w) == WARNING_KEYS, f"warning keys {list(w)}")
+    need(w["type"] in ("thunderstorm", "heavy_rain", "strong_wind", "heat", "cyclone", "other"),
+         "warning type")
+    need(isinstance(w["marine"], bool) and isinstance(w["states"], list), "warning marine/states")
+    start, end = (datetime.fromisoformat(w[k]) for k in ("valid_from", "valid_to"))
+    need(start.utcoffset() is not None and end > start - timedelta(days=1), "warning times")
+
+
 def validate(doc: dict) -> bytes:
-    """Check shape and ranges, return compact JSON bytes under output.MAX_BYTES."""
+    """Check shape and ranges, return compact JSON bytes under MAX_BYTES."""
     need = output._need
     expected = list(TOP_KEYS)
     if "nea" in doc:
@@ -150,6 +213,12 @@ def validate(doc: dict) -> bytes:
     towns = doc["towns"]
     need(len(towns) > 0 and all(t["country"] in ("MY", "SG") for t in towns), "towns")
     need(all(("nea_region" in t) == (t["country"] == "SG") for t in towns), "town nea_region")
+    for town in towns:
+        _check_met(town)
+    for warning in doc["warnings"]:
+        _check_warning(warning)
+    need(("met_updated_utc" in doc["sources"]) == any("met" in t for t in towns),
+         "sources.met_updated_utc must be present exactly when a town has met")
     body = json.dumps(doc, separators=(",", ":"), allow_nan=False, ensure_ascii=False).encode()
-    need(len(body) < output.MAX_BYTES, f"{len(body)} bytes is not under {output.MAX_BYTES}")
+    need(len(body) < MAX_BYTES, f"{len(body)} bytes is not under {MAX_BYTES}")
     return body

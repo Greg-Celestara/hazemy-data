@@ -13,9 +13,9 @@ from datetime import timedelta
 
 from shapely.ops import unary_union
 
-from hazemy import cams, compute, drivers, firms, gfs, gfs_extra, output, output_v2
+from hazemy import cams, compute, drivers, firms, gfs, gfs_extra, met, output, output_v2
 from hazemy import grid as gridmod
-from hazemy import singapore, trajectory
+from hazemy import singapore, trajectory, weather
 from hazemy.common import (Budget, PipelineError, http_get, make_logger, require_env,
                            utc_now)
 
@@ -64,7 +64,7 @@ def cams_series(env, now, cells, cache_dir, budget, log, retrieve) -> tuple:
 def run_job(env, *, out=DEFAULT_OUT, out_v2=None, cache_dir=DEFAULT_CACHE,
             gfs_cache_dir=DEFAULT_GFS_CACHE, now_fn=utc_now, log=print,
             retrieve=cams.retrieve_grib, fetch_wind=gfs.fetch_wind_messages,
-            fetch_bundle=gfs_extra.fetch_bundle, http=None) -> int:
+            fetch_bundle=gfs_extra.fetch_bundle, fetch_wx=None, http=None) -> int:
     """0 when v1 was written; 1 on any v1 failure, with the published files untouched.
 
     v1 never depends on v2: it is built and written first. v2 is built only when `out_v2` is
@@ -84,7 +84,8 @@ def run_job(env, *, out=DEFAULT_OUT, out_v2=None, cache_dir=DEFAULT_CACHE,
         require_env(env, ["ADS_API_KEY", "FIRMS_MAP_KEY"])
         ctx = {"env": env, "now_fn": now_fn, "cache_dir": cache_dir, "gfs_cache": gfs_cache_dir,
                "log": safe_log, "retrieve": retrieve, "fetch_wind": wind_once,
-               "fetch_bundle": fetch_bundle, "http": http or {}}
+               "fetch_bundle": fetch_bundle, "http": http or {},
+               "fetch_wx": fetch_wx or _nomads_fetcher(http or {})}
         budget = Budget()
         body, shared = _build_v1(ctx, budget)
         output.write_atomic(out, body)
@@ -95,6 +96,13 @@ def run_job(env, *, out=DEFAULT_OUT, out_v2=None, cache_dir=DEFAULT_CACHE,
     if out_v2 is not None:
         _publish_v2(ctx, budget, shared, out_v2)
     return 0
+
+
+def _nomads_fetcher(http: dict):
+    """The default weather fetch: NOMADS through the same HTTP hooks as the other feeds."""
+    def fetch(cycle, fhr, kind, budget, log=print):
+        return weather.fetch_wx(cycle, fhr, budget, log=log, **http)
+    return fetch
 
 
 def _publish_v2(ctx, budget, shared, out_v2) -> None:
@@ -186,6 +194,12 @@ def _build_v2(ctx, budget, shared) -> bytes:
     offsets = compute.forecast_offsets(series, now)
     days = _forecast_days(ctx, budget, series, now, offsets, used, w_tomorrow,
                           (lats, lons))
+    wx = _weather(ctx, budget, now, used, offsets, (lats, lons))
+    for k, cell_days in enumerate(days):
+        for offset, day in zip(offsets, cell_days):
+            day["weather"] = wx["days"][offset][k]
+    towns_v2 = load_towns_v2()
+    forecast = _met(ctx, budget, now, towns_v2)
     det = drivers.Detections(rows, firms.locate_provinces([(r[0], r[1]) for r in rows],
                                                           provinces), now)
     per_driver = [{"rain_tonight_mm": rain[k], "wind850_today": w_today[k],
@@ -200,10 +214,39 @@ def _build_v2(ctx, budget, shared) -> bytes:
         sg=[sg_all[k] if near_sg[k] else None for k in range(len(cells))],
         days=days, drivers=per_driver, paths=[trajectory.rounded(p) for p in paths], fires=fires,
         fires_daily=drivers.fires_daily(fires, det), bins=drivers.fire_bins(det), nea=nea,
-        towns=load_towns_v2(), traj_cycles=tcycles, nea_attribution=singapore.attribution(now))
+        towns=towns_v2, traj_cycles=tcycles, nea_attribution=singapore.attribution(now),
+        weather=wx, met_updated=forecast["updated"], warnings=forecast["warnings"])
     body = output_v2.validate(doc)
     log(f"downloaded {budget.total} bytes in total")
     return body
+
+
+def _met(ctx, budget, now, towns: list) -> dict:
+    """MetMalaysia forecast (added to `towns` in place) and warnings; never stops v2."""
+    log = ctx["log"]
+    try:
+        result = met.load_met(towns, now, budget, ctx["cache_dir"], log, **ctx["http"])
+    except Exception as err:  # noqa: BLE001 - MetMalaysia data is optional
+        log(f"WARNING: MetMalaysia data failed, publishing without it. "
+            f"{type(err).__name__}: {err}")
+        return {"met": [], "updated": None, "warnings": []}
+    for town, town_met in zip(towns, result["met"]):
+        if town_met is not None:
+            town["met"] = town_met
+    return result
+
+
+def _weather(ctx, budget, now, cycle, offsets, coords) -> dict:
+    """Per cell weather from GFS; all null when no cycle gives data. Never stops v2."""
+    lats, lons = coords
+    log = ctx["log"]
+    try:
+        fields = weather.load_weather(now, cycle, offsets, lats, lons, ctx["gfs_cache"], budget,
+                                      ctx["fetch_wx"], log)
+    except Exception as err:  # noqa: BLE001 - weather is optional, v2 is published without it
+        log(f"WARNING: GFS weather failed, publishing null weather. {type(err).__name__}: {err}")
+        fields = None
+    return weather.cell_weather(fields, now, offsets, len(lats))
 
 
 def _forecast_days(ctx, budget, series, now, offsets, used, w_tomorrow, coords) -> list:

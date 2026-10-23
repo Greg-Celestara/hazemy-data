@@ -20,15 +20,18 @@ zero detections (empty lists; `path_fire_count_72h` 0 with null province and tre
     "firms_updated_utc": "2026-10-20T03:35:00Z",
     "gfs_traj_cycles_utc": ["2026-10-18T00:00:00Z", "..."],
     "nea_updated_utc": "2026-10-20T03:00:00Z",
+    "met_updated_utc": "2026-10-23T10:29:00Z",
     "nea_attribution": "Contains information from PSI accessed on 20 Oct 2026 from data.gov.sg which is made available under the terms of the Singapore Open Data Licence version 1.0 https://data.gov.sg/open-data-licence" },
   "grid": { "...": "v1" },
   "cells": [
     { "i": 6, "j": 5,
-      "now": { "pm25_24h": 69.1, "api": 158, "band": 3 },
+      "now": { "pm25_24h": 69.1, "api": 158, "band": 3,
+        "weather": { "temp_c": 31.2, "rh": 74, "feels_c": 38, "rain_mm_3h": 0.4 } },
       "tomorrow": { "api": 121, "api_min": 121, "api_max": 155, "band": 3 },
       "days": [
         { "date": "2026-10-21", "api": 121, "api_min": 121, "api_max": 155, "band": 3,
-          "wind850": { "from_deg": 205, "speed_kmh": 26 } },
+          "wind850": { "from_deg": 205, "speed_kmh": 26 },
+          "weather": { "temp_min_c": 25.1, "temp_max_c": 32.4, "feels_max_c": 41, "rain_mm": 3.2 } },
         { "date": "2026-10-22", "api": 98, "api_min": 90, "api_max": 121, "band": 2,
           "wind850": { "from_deg": 190, "speed_kmh": 20 } },
         { "date": "2026-10-23", "api": 80, "api_min": 70, "api_max": 98, "band": 2,
@@ -45,7 +48,8 @@ zero detections (empty lists; `path_fire_count_72h` 0 with null province and tre
         "path_fire_count_72h": 412,
         "path_fire_trend": "rising"
       },
-      "path48h": [[3.14, 101.69], [3.0, 101.9], "... 17 points, 3-hourly, newest first"]
+      "path48h": [[3.14, 101.69], [3.0, 101.9], "... 17 points, 3-hourly, newest first"],
+      "today_weather": { "temp_min_c": 27.3, "temp_max_c": 32.4, "feels_max_c": 41, "rain_mm": 1.1 }
     }
   ],
   "fires_72h": [ "...v1..." ],
@@ -54,8 +58,17 @@ zero detections (empty lists; `path_fire_count_72h` 0 with null province and tre
   "nea": { "updated_utc": "...", "regions": {
       "north":   { "lat": 1.41, "lon": 103.82, "psi_24h": 64, "band": 2 },
       "south": {}, "east": {}, "west": {}, "central": {} } },
-  "towns": [ { "name": "Petaling Jaya", "lat": 3.107, "lon": 101.606, "country": "MY" },
-             { "name": "Tampines", "lat": 1.353, "lon": 103.945, "country": "SG", "nea_region": "east" } ]
+  "towns": [ { "name": "Petaling Jaya", "lat": 3.107, "lon": 101.606, "country": "MY",
+               "met": { "place": "Petaling", "id": "Ds057", "km": 3.2, "days": [
+                 { "date": "2026-10-23", "morning": "Tiada Hujan", "afternoon": "Ribut petir di beberapa tempat",
+                   "night": "Tiada Hujan", "summary": "Ribut petir di beberapa tempat", "when": "Petang",
+                   "min_c": 24, "max_c": 33 } ] } },
+             { "name": "Tampines", "lat": 1.353, "lon": 103.945, "country": "SG", "nea_region": "east" } ],
+  "warnings": [ { "id": "3f2a9c01b7de", "type": "thunderstorm", "level": null, "marine": false,
+      "issued": "2026-10-23T17:55:00+08:00", "valid_from": "2026-10-23T17:00:00+08:00",
+      "valid_to": "2026-10-23T21:00:00+08:00", "title_en": "Thunderstorms Warning",
+      "title_bm": "Amaran Ribut Petir", "text_en": "...", "text_bm": "...",
+      "instruction_en": null, "instruction_bm": null, "states": ["Kedah", "Penang", "Perak"] } ]
 }
 ```
 
@@ -116,4 +129,59 @@ zero detections (empty lists; `path_fire_count_72h` 0 with null province and tre
   24–48 h ago, last 24 h].
 - **`fire_bins`**: all 72 h detections in the FIRMS bbox binned to 0.25° (bin centre lat,
   lon, count), at most 1500 bins (largest counts kept).
-- File under 500 KB. Breaking changes go to `/v3/`.
+- **GFS weather (v1.4).** Every number is a GFS model estimate at the cell centre (0.5 degree
+  grid, bilinear), from the same cycle as the paths (`gfs_traj_cycles_utc`, last entry), else the
+  cycle before it. Fields are added after the existing keys of each object; nothing existing
+  changes.
+  - `cells[].now.weather`: `{temp_c, rh, feels_c, rain_mm_3h}` at the forecast step nearest to the
+    run time. `temp_c` 1 decimal (deg C, 2 m), `rh` integer %, `feels_c` integer deg C,
+    `rain_mm_3h` 1 decimal (rain in the 3 h up to that step).
+  - `cells[].today_weather`: `{temp_min_c, temp_max_c, feels_max_c, rain_mm}` for the rest of
+    today's MYT day: the steps from the one nearest to the run time to the end of the day for
+    temperature, rain from the run time to the end of the day.
+  - `cells[].days[i].weather`: the same four fields over the whole MYT day (16:00 UTC to 16:00
+    UTC); `rain_mm` is the accumulation across exactly those two instants. Day min and max use
+    the 3-hourly steps inside the day.
+  - **Feels like** is the NOAA heat index (Rothfusz regression with NOAA's adjustments, from
+    https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml). Below 27 deg C it equals the
+    temperature. Whole deg C.
+  - A forecast hour that could not be had leaves the fields that need it `null`, never an
+    estimate: a day with one missing temperature step has `temp_min_c`, `temp_max_c` and
+    `feels_max_c` null but may still have `rain_mm`. If no GFS weather can be had at all, every
+    weather field is null and the rest of v2 is unaffected.
+  - Source: the NOMADS grid filter (`filter_gfs_0p50.pl`, subregion 94-122 E, 4 S-10 N), one
+    request per forecast hour, about 10 KB each, cached with the other GFS files (kind `wx`).
+- **MetMalaysia forecast (v1.4).** One request per run to
+  `https://api.data.gov.my/weather/forecast/`. Each Malaysian town takes the nearest MetMalaysia
+  place of type Tn (town) or Ds (district) within 25 km (coordinates in `data/met_places.json`, from GeoNames (CC BY 4.0), built by
+  `scripts/build_met_places.py`; attribute GeoNames next to MetMalaysia).
+  Rc, Dv and St places are never used. No match, or a Singapore town, gives no `met`.
+  `towns[].met` = `{place, id, km, days}`; `days` is today plus 3 days in date order (MYT dates),
+  only dates the feed has. Day fields are copied from the feed: `morning`, `afternoon`, `night`,
+  `summary` and `when` are its Malay text unchanged, `min_c` and `max_c` its integers. If the
+  fetch fails or returns 0 rows, the last good copy is reused for up to 24 h, then `met` is
+  dropped. `sources.met_updated_utc` is the fetch time of the data used, present only when at
+  least one town has `met`.
+- **`warnings` (v1.4).** Top level, always present, a list (empty when none). From
+  `https://api.data.gov.my/weather/warning/`. A warning is kept when its `valid_to` is later
+  than now; "No Advisory" / "Tiada Nasihat" rows, rows with null validity and expired rows are
+  dropped. The feed's times carry no offset and are MYT, so `+08:00` is added. Fields:
+  - `id`: first 12 hex digits of the SHA-1 of `title_en` + `issued` + `valid_from` (the two
+    times as written in this file, with the offset).
+  - `type`, from the title: `thunderstorm`, `heavy_rain`, `strong_wind`, `heat`, `cyclone`,
+    `other` (checked in that order).
+  - `marine`: true when the title or heading says "Rough Seas" / "Laut Bergelora", or the English
+    text says "waters of".
+  - `level`: from the title and heading only: `cat1`/`cat2`/`cat3` (FIRST/SECOND/THIRD CATEGORY),
+    `heat1`/`heat2`/`heat3` (heat warnings stating a level 1-3), else `danger` (Danger, Bahaya),
+    `severe` (Severe, Buruk), `alert` (Alert, Waspada), else `null`.
+  - `title_*`, `text_*`, `instruction_*`: copied from the feed (instruction may be null).
+  - `states`: canonical names of the states and federal territories named in `text_en`, then any
+    only named in `text_bm`, in order of appearance. Names: Johor, Kedah, Kelantan, Melaka,
+    Negeri Sembilan, Pahang, Penang, Perak, Perlis, Sabah, Sarawak, Selangor, Terengganu, Kuala
+    Lumpur, Putrajaya, Labuan. Aliases: Pulau Pinang = Penang, N. Sembilan = Negeri Sembilan,
+    Malacca = Melaka. An empty list means the text names none (treat as all of Malaysia).
+    Marine warnings list states by the waters they name.
+  - If the fetch fails, the last good copy is kept, still filtered by `valid_to`.
+- Neither MetMalaysia feed nor GFS weather can stop v2 from being published.
+- File under 700 KB (`MAX_BYTES` in `output_v2.py`, enforced by the job; v1 stays under 500 KB). Breaking changes go to `/v3/`.

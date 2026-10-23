@@ -1,0 +1,2069 @@
+{
+"source": "GeoNames (CC BY 4.0)",
+"places": [
+{
+"id": "Ds001",
+"name": "Langkawi",
+"lat": 6.3561,
+"lon": 99.7837
+},
+{
+"id": "Ds002",
+"name": "Perlis",
+"lat": 6.5,
+"lon": 100.25
+},
+{
+"id": "Ds003",
+"name": "Kubang Pasu",
+"lat": 6.4051,
+"lon": 100.4398
+},
+{
+"id": "Ds004",
+"name": "Kota Setar",
+"lat": 6.1121,
+"lon": 100.3589
+},
+{
+"id": "Ds005",
+"name": "Pokok Sena",
+"lat": 6.1706,
+"lon": 100.5189
+},
+{
+"id": "Ds006",
+"name": "Padang Terap",
+"lat": 6.2473,
+"lon": 100.7715
+},
+{
+"id": "Ds007",
+"name": "Yan",
+"lat": 5.7905,
+"lon": 100.3943
+},
+{
+"id": "Ds008",
+"name": "Pendang",
+"lat": 5.9952,
+"lon": 100.4788
+},
+{
+"id": "Ds009",
+"name": "Kuala Muda",
+"lat": 5.7104,
+"lon": 100.3793
+},
+{
+"id": "Ds010",
+"name": "Sik",
+"lat": 5.8333,
+"lon": 100.75
+},
+{
+"id": "Ds011",
+"name": "Barat Daya",
+"lat": 5.3622,
+"lon": 100.2349
+},
+{
+"id": "Ds013",
+"name": "Seberang Perai Utara",
+"lat": 5.4084,
+"lon": 100.3787
+},
+{
+"id": "Ds015",
+"name": "Baling",
+"lat": 5.6781,
+"lon": 100.9177
+},
+{
+"id": "Ds016",
+"name": "Kulim",
+"lat": 5.365,
+"lon": 100.5618
+},
+{
+"id": "Ds017",
+"name": "Seberang Perai Selatan",
+"lat": 5.2256,
+"lon": 100.4721
+},
+{
+"id": "Ds018",
+"name": "Bandar Baharu",
+"lat": 5.1343,
+"lon": 100.4955
+},
+{
+"id": "Ds019",
+"name": "Kerian",
+"lat": 5.0102,
+"lon": 100.5623
+},
+{
+"id": "Ds022",
+"name": "Tumpat",
+"lat": 6.1978,
+"lon": 102.171
+},
+{
+"id": "Ds023",
+"name": "Pasir Mas",
+"lat": 6.0493,
+"lon": 102.1399
+},
+{
+"id": "Ds024",
+"name": "Kota Bharu",
+"lat": 6.1236,
+"lon": 102.2433
+},
+{
+"id": "Ds025",
+"name": "Jeli",
+"lat": 5.5876,
+"lon": 101.81
+},
+{
+"id": "Ds026",
+"name": "Kuala Kangsar",
+"lat": 4.7667,
+"lon": 100.9333
+},
+{
+"id": "Ds027",
+"name": "Tanah Merah",
+"lat": 5.8,
+"lon": 102.15
+},
+{
+"id": "Ds028",
+"name": "Bachok",
+"lat": 6.0667,
+"lon": 102.4
+},
+{
+"id": "Ds030",
+"name": "Machang",
+"lat": 5.7641,
+"lon": 102.2141
+},
+{
+"id": "Ds031",
+"name": "Pasir Puteh",
+"lat": 5.8333,
+"lon": 102.4
+},
+{
+"id": "Ds033",
+"name": "Perak Tengah",
+"lat": 4.2643,
+"lon": 100.9097
+},
+{
+"id": "Ds034",
+"name": "Kuala Krai",
+"lat": 5.5313,
+"lon": 102.1993
+},
+{
+"id": "Ds035",
+"name": "Kampar",
+"lat": 4.3,
+"lon": 101.15
+},
+{
+"id": "Ds036",
+"name": "Bagan Datuk",
+"lat": 3.9899,
+"lon": 100.7819
+},
+{
+"id": "Ds037",
+"name": "Besut",
+"lat": 5.5711,
+"lon": 102.5191
+},
+{
+"id": "Ds039",
+"name": "Gua Musang",
+"lat": 4.8844,
+"lon": 101.9686
+},
+{
+"id": "Ds040",
+"name": "Hilir Perak",
+"lat": 3.9337,
+"lon": 101.0252
+},
+{
+"id": "Ds041",
+"name": "Batang Padang",
+"lat": 4.0316,
+"lon": 101.3716
+},
+{
+"id": "Ds042",
+"name": "Setiu",
+"lat": 5.5501,
+"lon": 102.7355
+},
+{
+"id": "Ds043",
+"name": "Sabak Bernam",
+"lat": 3.7698,
+"lon": 100.9879
+},
+{
+"id": "Ds044",
+"name": "Lipis",
+"lat": 4.3448,
+"lon": 101.9159
+},
+{
+"id": "Ds046",
+"name": "Kuala Nerus",
+"lat": 5.3729,
+"lon": 103.0205
+},
+{
+"id": "Ds047",
+"name": "Hulu Terengganu",
+"lat": 5.048,
+"lon": 102.7782
+},
+{
+"id": "Ds048",
+"name": "Kuala Terengganu",
+"lat": 5.3302,
+"lon": 103.1408
+},
+{
+"id": "Ds049",
+"name": "Kuala Selangor",
+"lat": 3.35,
+"lon": 101.25
+},
+{
+"id": "Ds050",
+"name": "Raub",
+"lat": 3.7899,
+"lon": 101.857
+},
+{
+"id": "Ds051",
+"name": "Hulu Selangor",
+"lat": 3.5,
+"lon": 101.5833
+},
+{
+"id": "Ds052",
+"name": "Marang",
+"lat": 5.2056,
+"lon": 103.2059
+},
+{
+"id": "Ds053",
+"name": "Jerantut",
+"lat": 3.936,
+"lon": 102.3626
+},
+{
+"id": "Ds054",
+"name": "Klang",
+"lat": 3.0367,
+"lon": 101.4433
+},
+{
+"id": "Ds055",
+"name": "Gombak",
+"lat": 3.3,
+"lon": 101.7
+},
+{
+"id": "Ds056",
+"name": "Dungun",
+"lat": 4.775,
+"lon": 103.4162
+},
+{
+"id": "Ds057",
+"name": "Petaling",
+"lat": 3.0833,
+"lon": 101.6667
+},
+{
+"id": "Ds058",
+"name": "Kuala Lumpur",
+"lat": 3.1412,
+"lon": 101.6865
+},
+{
+"id": "Ds059",
+"name": "Bentong",
+"lat": 3.3806,
+"lon": 102.0125
+},
+{
+"id": "Ds060",
+"name": "Kuala Langat",
+"lat": 2.75,
+"lon": 101.5
+},
+{
+"id": "Ds061",
+"name": "Temerloh",
+"lat": 3.4506,
+"lon": 102.4176
+},
+{
+"id": "Ds062",
+"name": "Putrajaya",
+"lat": 2.9353,
+"lon": 101.6911
+},
+{
+"id": "Ds063",
+"name": "Hulu Langat",
+"lat": 3.1137,
+"lon": 101.8142
+},
+{
+"id": "Ds064",
+"name": "Sepang",
+"lat": 2.6931,
+"lon": 101.7498
+},
+{
+"id": "Ds065",
+"name": "Kemaman",
+"lat": 4.2758,
+"lon": 103.2262
+},
+{
+"id": "Ds066",
+"name": "Maran",
+"lat": 3.586,
+"lon": 102.773
+},
+{
+"id": "Ds067",
+"name": "Jelebu",
+"lat": 3.0402,
+"lon": 102.1139
+},
+{
+"id": "Ds068",
+"name": "Seremban",
+"lat": 2.7297,
+"lon": 101.9381
+},
+{
+"id": "Ds069",
+"name": "Kuantan",
+"lat": 3.8077,
+"lon": 103.326
+},
+{
+"id": "Ds070",
+"name": "Port Dickson",
+"lat": 2.5246,
+"lon": 101.7965
+},
+{
+"id": "Ds071",
+"name": "Bera",
+"lat": 3.3333,
+"lon": 102.5
+},
+{
+"id": "Ds072",
+"name": "Kuala Pilah",
+"lat": 2.7389,
+"lon": 102.2487
+},
+{
+"id": "Ds073",
+"name": "Rembau",
+"lat": 2.5897,
+"lon": 102.0913
+},
+{
+"id": "Ds074",
+"name": "Jempol",
+"lat": 2.847,
+"lon": 102.4673
+},
+{
+"id": "Ds075",
+"name": "Alor Gajah",
+"lat": 2.3804,
+"lon": 102.2089
+},
+{
+"id": "Ds076",
+"name": "Pekan",
+"lat": 3.4836,
+"lon": 103.3996
+},
+{
+"id": "Ds077",
+"name": "Tampin",
+"lat": 2.4701,
+"lon": 102.2302
+},
+{
+"id": "Ds078",
+"name": "Melaka Tengah",
+"lat": 2.1674,
+"lon": 102.3273
+},
+{
+"id": "Ds079",
+"name": "Jasin",
+"lat": 2.3096,
+"lon": 102.4281
+},
+{
+"id": "Ds080",
+"name": "Rompin",
+"lat": 2.7083,
+"lon": 102.5047
+},
+{
+"id": "Ds081",
+"name": "Tangkak",
+"lat": 2.2673,
+"lon": 102.5453
+},
+{
+"id": "Ds082",
+"name": "Segamat",
+"lat": 2.5148,
+"lon": 102.8158
+},
+{
+"id": "Ds083",
+"name": "Muar",
+"lat": 2.0442,
+"lon": 102.5689
+},
+{
+"id": "Ds084",
+"name": "Batu Pahat",
+"lat": 1.8548,
+"lon": 102.9325
+},
+{
+"id": "Ds085",
+"name": "Kluang",
+"lat": 2.0305,
+"lon": 103.3169
+},
+{
+"id": "Ds086",
+"name": "Mersing",
+"lat": 2.4312,
+"lon": 103.8405
+},
+{
+"id": "Ds087",
+"name": "Pontian",
+"lat": 1.5059,
+"lon": 103.3816
+},
+{
+"id": "Ds088",
+"name": "Kulai",
+"lat": 1.6561,
+"lon": 103.6032
+},
+{
+"id": "Ds089",
+"name": "Kota Tinggi",
+"lat": 1.7381,
+"lon": 103.8999
+},
+{
+"id": "Ds090",
+"name": "Johor Bahru",
+"lat": 1.4655,
+"lon": 103.7578
+},
+{
+"id": "Ds092",
+"name": "Selama",
+"lat": 5.2236,
+"lon": 100.6926
+},
+{
+"id": "Ds501",
+"name": "Tebedu",
+"lat": 1.0266,
+"lon": 110.3633
+},
+{
+"id": "Ds502",
+"name": "Bau",
+"lat": 1.4167,
+"lon": 110.15
+},
+{
+"id": "Ds503",
+"name": "Lundu",
+"lat": 1.6744,
+"lon": 109.8517
+},
+{
+"id": "Ds504",
+"name": "Kuching",
+"lat": 1.55,
+"lon": 110.3333
+},
+{
+"id": "Ds505",
+"name": "Serian",
+"lat": 1.1667,
+"lon": 110.5667
+},
+{
+"id": "Ds507",
+"name": "Asajaya",
+"lat": 1.5542,
+"lon": 110.5871
+},
+{
+"id": "Ds508",
+"name": "Simunjan",
+"lat": 1.3833,
+"lon": 110.75
+},
+{
+"id": "Ds509",
+"name": "Sri Aman",
+"lat": 1.2472,
+"lon": 111.4528
+},
+{
+"id": "Ds510",
+"name": "Pusa",
+"lat": 1.5833,
+"lon": 111.25
+},
+{
+"id": "Ds511",
+"name": "Betong",
+"lat": 1.4,
+"lon": 111.5167
+},
+{
+"id": "Ds512",
+"name": "Saratok",
+"lat": 1.7333,
+"lon": 111.3333
+},
+{
+"id": "Ds513",
+"name": "Kabong",
+"lat": 1.8333,
+"lon": 111.1667
+},
+{
+"id": "Ds514",
+"name": "Lubok Antu",
+"lat": 1.0419,
+"lon": 111.834
+},
+{
+"id": "Ds515",
+"name": "Pakan",
+"lat": 1.8833,
+"lon": 111.6833
+},
+{
+"id": "Ds516",
+"name": "Sarikei",
+"lat": 2.1167,
+"lon": 111.5167
+},
+{
+"id": "Ds517",
+"name": "Tanjung Manis",
+"lat": 2.2333,
+"lon": 111.2167
+},
+{
+"id": "Ds518",
+"name": "Julau",
+"lat": 2.0167,
+"lon": 111.9167
+},
+{
+"id": "Ds519",
+"name": "Meradong",
+"lat": 2.1124,
+"lon": 111.6986
+},
+{
+"id": "Ds520",
+"name": "Daro",
+"lat": 2.5169,
+"lon": 111.43
+},
+{
+"id": "Ds521",
+"name": "Sibu",
+"lat": 2.3,
+"lon": 111.8167
+},
+{
+"id": "Ds522",
+"name": "Kanowit",
+"lat": 2.1,
+"lon": 112.15
+},
+{
+"id": "Ds523",
+"name": "Song",
+"lat": 2.0167,
+"lon": 112.55
+},
+{
+"id": "Ds524",
+"name": "Matu",
+"lat": 2.6833,
+"lon": 111.5333
+},
+{
+"id": "Ds525",
+"name": "Dalat",
+"lat": 2.6667,
+"lon": 112.0833
+},
+{
+"id": "Ds526",
+"name": "Selangau",
+"lat": 2.5248,
+"lon": 112.3254
+},
+{
+"id": "Ds527",
+"name": "Mukah",
+"lat": 2.8944,
+"lon": 112.0914
+},
+{
+"id": "Ds528",
+"name": "Kapit",
+"lat": 1.9955,
+"lon": 112.9325
+},
+{
+"id": "Ds530",
+"name": "Tatau",
+"lat": 2.8833,
+"lon": 112.85
+},
+{
+"id": "Ds531",
+"name": "Bintulu",
+"lat": 3.1667,
+"lon": 113.0333
+},
+{
+"id": "Ds532",
+"name": "Sebauh",
+"lat": 3.1167,
+"lon": 113.2667
+},
+{
+"id": "Ds533",
+"name": "Belaga",
+"lat": 2.7,
+"lon": 113.7833
+},
+{
+"id": "Ds535",
+"name": "Beluru",
+"lat": 3.9833,
+"lon": 114.1
+},
+{
+"id": "Ds537",
+"name": "Miri",
+"lat": 4.3993,
+"lon": 113.9916
+},
+{
+"id": "Ds538",
+"name": "Marudi",
+"lat": 4.1833,
+"lon": 114.3167
+},
+{
+"id": "Ds539",
+"name": "Limbang",
+"lat": 4.7548,
+"lon": 115.0101
+},
+{
+"id": "Ds540",
+"name": "Lawas",
+"lat": 4.8604,
+"lon": 115.409
+},
+{
+"id": "Ds541",
+"name": "Sipitang",
+"lat": 5.079,
+"lon": 115.5496
+},
+{
+"id": "Ds543",
+"name": "Tenom",
+"lat": 5.1192,
+"lon": 115.9372
+},
+{
+"id": "Ds544",
+"name": "Kuala Penyu",
+"lat": 5.5714,
+"lon": 115.5984
+},
+{
+"id": "Ds545",
+"name": "Beaufort",
+"lat": 5.3473,
+"lon": 115.7455
+},
+{
+"id": "Ds546",
+"name": "Nabawan",
+"lat": 4.6187,
+"lon": 116.463
+},
+{
+"id": "Ds547",
+"name": "Keningau",
+"lat": 5.3378,
+"lon": 116.1602
+},
+{
+"id": "Ds548",
+"name": "Papar",
+"lat": 5.7333,
+"lon": 115.9333
+},
+{
+"id": "Ds549",
+"name": "Putatan",
+"lat": 5.9258,
+"lon": 116.0609
+},
+{
+"id": "Ds551",
+"name": "Tambunan",
+"lat": 5.7167,
+"lon": 116.4
+},
+{
+"id": "Ds552",
+"name": "Tawau",
+"lat": 4.2448,
+"lon": 117.8911
+},
+{
+"id": "Ds553",
+"name": "Tongod",
+"lat": 5.1249,
+"lon": 117.0132
+},
+{
+"id": "Ds554",
+"name": "Kota Kinabalu",
+"lat": 5.9749,
+"lon": 116.0724
+},
+{
+"id": "Ds555",
+"name": "Tuaran",
+"lat": 6.1774,
+"lon": 116.2314
+},
+{
+"id": "Ds556",
+"name": "Ranau",
+"lat": 5.9538,
+"lon": 116.6641
+},
+{
+"id": "Ds557",
+"name": "Kunak",
+"lat": 4.6667,
+"lon": 118.0833
+},
+{
+"id": "Ds558",
+"name": "Kota Belud",
+"lat": 6.351,
+"lon": 116.4305
+},
+{
+"id": "Ds559",
+"name": "Semporna",
+"lat": 4.4818,
+"lon": 118.6112
+},
+{
+"id": "Ds560",
+"name": "Telupid",
+"lat": 5.65,
+"lon": 117.1167
+},
+{
+"id": "Ds561",
+"name": "Kota Marudu",
+"lat": 6.4167,
+"lon": 116.75
+},
+{
+"id": "Ds562",
+"name": "Lahad Datu",
+"lat": 5.023,
+"lon": 118.329
+},
+{
+"id": "Ds563",
+"name": "Kinabatangan",
+"lat": 5.586,
+"lon": 117.8508
+},
+{
+"id": "Ds564",
+"name": "Beluran",
+"lat": 5.8956,
+"lon": 117.5557
+},
+{
+"id": "Ds565",
+"name": "Sandakan",
+"lat": 5.8402,
+"lon": 118.1179
+},
+{
+"id": "Ds566",
+"name": "Pitas",
+"lat": 6.7278,
+"lon": 117.0578
+},
+{
+"id": "Ds567",
+"name": "Kudat",
+"lat": 6.8873,
+"lon": 116.8236
+},
+{
+"id": "Ds568",
+"name": "Membakut",
+"lat": 5.4748,
+"lon": 115.803
+},
+{
+"id": "Ds571",
+"name": "Kalabakan",
+"lat": 4.4167,
+"lon": 117.4833
+},
+{
+"id": "Ds572",
+"name": "Sook",
+"lat": 5.141,
+"lon": 116.3088
+},
+{
+"id": "Ds573",
+"name": "Sebuyau",
+"lat": 1.5167,
+"lon": 110.9333
+},
+{
+"id": "Ds574",
+"name": "Gedong",
+"lat": 1.2333,
+"lon": 110.6833
+},
+{
+"id": "Ds575",
+"name": "Pantu",
+"lat": 1.1397,
+"lon": 111.1177
+},
+{
+"id": "Ds576",
+"name": "Lingga",
+"lat": 1.35,
+"lon": 111.1667
+},
+{
+"id": "Ds577",
+"name": "Siburan",
+"lat": 1.3667,
+"lon": 110.4
+},
+{
+"id": "Ds578",
+"name": "Labuan",
+"lat": 5.2803,
+"lon": 115.2475
+},
+{
+"id": "Ds579",
+"name": "Bario",
+"lat": 3.7404,
+"lon": 115.4639
+},
+{
+"id": "Tn001",
+"name": "Perlis",
+"lat": 6.5,
+"lon": 100.25
+},
+{
+"id": "Tn002",
+"name": "Jitra",
+"lat": 6.2681,
+"lon": 100.4217
+},
+{
+"id": "Tn003",
+"name": "Alor Star",
+"lat": 6.121,
+"lon": 100.3601
+},
+{
+"id": "Tn004",
+"name": "Pokok Sena",
+"lat": 6.1706,
+"lon": 100.5189
+},
+{
+"id": "Tn005",
+"name": "Kuala Nerang",
+"lat": 6.2584,
+"lon": 100.6126
+},
+{
+"id": "Tn006",
+"name": "Pendang",
+"lat": 5.9952,
+"lon": 100.4788
+},
+{
+"id": "Tn007",
+"name": "Yan",
+"lat": 5.7905,
+"lon": 100.3943
+},
+{
+"id": "Tn008",
+"name": "Sungai Petani",
+"lat": 5.647,
+"lon": 100.4877
+},
+{
+"id": "Tn009",
+"name": "Balik Pulau",
+"lat": 5.3492,
+"lon": 100.2394
+},
+{
+"id": "Tn010",
+"name": "Ayer Itam",
+"lat": 5.4016,
+"lon": 100.2781
+},
+{
+"id": "Tn011",
+"name": "Sik",
+"lat": 5.8333,
+"lon": 100.75
+},
+{
+"id": "Tn012",
+"name": "Kepala Batas",
+"lat": 5.5171,
+"lon": 100.4265
+},
+{
+"id": "Tn013",
+"name": "Georgetown",
+"lat": 5.4112,
+"lon": 100.3354
+},
+{
+"id": "Tn014",
+"name": "Butterworth",
+"lat": 5.3991,
+"lon": 100.3638
+},
+{
+"id": "Tn015",
+"name": "Bayan Lepas",
+"lat": 5.2999,
+"lon": 100.2605
+},
+{
+"id": "Tn016",
+"name": "Perai",
+"lat": 5.3833,
+"lon": 100.3833
+},
+{
+"id": "Tn017",
+"name": "Bukit Tengah",
+"lat": 5.346,
+"lon": 100.4392
+},
+{
+"id": "Tn018",
+"name": "Bukit Mertajam",
+"lat": 5.363,
+"lon": 100.4667
+},
+{
+"id": "Tn019",
+"name": "Batu Kawan",
+"lat": 5.2582,
+"lon": 100.4288
+},
+{
+"id": "Tn020",
+"name": "Kulim",
+"lat": 5.365,
+"lon": 100.5618
+},
+{
+"id": "Tn021",
+"name": "Baling",
+"lat": 5.6781,
+"lon": 100.9177
+},
+{
+"id": "Tn022",
+"name": "Nibong Tebal",
+"lat": 5.1659,
+"lon": 100.4779
+},
+{
+"id": "Tn023",
+"name": "Serdang",
+"lat": 5.2037,
+"lon": 100.6248
+},
+{
+"id": "Tn024",
+"name": "Parit Buntar",
+"lat": 5.1267,
+"lon": 100.4932
+},
+{
+"id": "Tn025",
+"name": "Selama",
+"lat": 5.2236,
+"lon": 100.6926
+},
+{
+"id": "Tn026",
+"name": "Bagan Serai",
+"lat": 5.0108,
+"lon": 100.541
+},
+{
+"id": "Tn027",
+"name": "Gerik",
+"lat": 5.4167,
+"lon": 101.1333
+},
+{
+"id": "Tn028",
+"name": "Lenggong",
+"lat": 5.1063,
+"lon": 100.9679
+},
+{
+"id": "Tn029",
+"name": "Taiping",
+"lat": 4.85,
+"lon": 100.7333
+},
+{
+"id": "Tn030",
+"name": "Rantau Panjang",
+"lat": 6.0219,
+"lon": 101.9767
+},
+{
+"id": "Tn031",
+"name": "Tumpat",
+"lat": 6.1978,
+"lon": 102.171
+},
+{
+"id": "Tn032",
+"name": "Pasir Mas",
+"lat": 6.0493,
+"lon": 102.1399
+},
+{
+"id": "Tn033",
+"name": "Kota Bharu",
+"lat": 6.1236,
+"lon": 102.2433
+},
+{
+"id": "Tn034",
+"name": "Jeli",
+"lat": 5.5876,
+"lon": 101.81
+},
+{
+"id": "Tn035",
+"name": "Kuala Kangsar",
+"lat": 4.7667,
+"lon": 100.9333
+},
+{
+"id": "Tn036",
+"name": "Sungai Siput",
+"lat": 4.3945,
+"lon": 101.1947
+},
+{
+"id": "Tn037",
+"name": "Bachok",
+"lat": 6.0667,
+"lon": 102.4
+},
+{
+"id": "Tn038",
+"name": "Tanah Merah",
+"lat": 5.8,
+"lon": 102.15
+},
+{
+"id": "Tn039",
+"name": "Machang",
+"lat": 5.7641,
+"lon": 102.2141
+},
+{
+"id": "Tn040",
+"name": "Sitiawan",
+"lat": 4.2168,
+"lon": 100.6996
+},
+{
+"id": "Tn041",
+"name": "Ipoh",
+"lat": 4.5841,
+"lon": 101.0829
+},
+{
+"id": "Tn042",
+"name": "Pasir Puteh",
+"lat": 5.8333,
+"lon": 102.4
+},
+{
+"id": "Tn043",
+"name": "Batu Gajah",
+"lat": 4.4692,
+"lon": 101.0411
+},
+{
+"id": "Tn044",
+"name": "Seri Iskandar",
+"lat": 4.3599,
+"lon": 100.9849
+},
+{
+"id": "Tn045",
+"name": "Kuala Krai",
+"lat": 5.5313,
+"lon": 102.1993
+},
+{
+"id": "Tn046",
+"name": "Gopeng",
+"lat": 4.4715,
+"lon": 101.1663
+},
+{
+"id": "Tn047",
+"name": "Besut",
+"lat": 5.5711,
+"lon": 102.5191
+},
+{
+"id": "Tn048",
+"name": "Jerteh",
+"lat": 5.7336,
+"lon": 102.4897
+},
+{
+"id": "Tn049",
+"name": "Bagan Datuk",
+"lat": 3.9899,
+"lon": 100.7819
+},
+{
+"id": "Tn050",
+"name": "Kampar",
+"lat": 4.3,
+"lon": 101.15
+},
+{
+"id": "Tn051",
+"name": "Teluk Intan",
+"lat": 4.0222,
+"lon": 101.0208
+},
+{
+"id": "Tn052",
+"name": "Tapah",
+"lat": 4.1833,
+"lon": 101.2667
+},
+{
+"id": "Tn053",
+"name": "Gua Musang",
+"lat": 4.8844,
+"lon": 101.9686
+},
+{
+"id": "Tn054",
+"name": "Sabak Bernam",
+"lat": 3.7698,
+"lon": 100.9879
+},
+{
+"id": "Tn055",
+"name": "Bandar Permaisuri",
+"lat": 5.5224,
+"lon": 102.7485
+},
+{
+"id": "Tn056",
+"name": "Setiu",
+"lat": 5.5501,
+"lon": 102.7355
+},
+{
+"id": "Tn057",
+"name": "Slim River",
+"lat": 3.8333,
+"lon": 101.4
+},
+{
+"id": "Tn058",
+"name": "Kuala Nerus",
+"lat": 5.3729,
+"lon": 103.0205
+},
+{
+"id": "Tn059",
+"name": "Kuala Terengganu",
+"lat": 5.3302,
+"lon": 103.1408
+},
+{
+"id": "Tn060",
+"name": "Kuala Lipis",
+"lat": 4.1842,
+"lon": 102.0468
+},
+{
+"id": "Tn061",
+"name": "Kuala Selangor",
+"lat": 3.35,
+"lon": 101.25
+},
+{
+"id": "Tn062",
+"name": "Raub",
+"lat": 3.7899,
+"lon": 101.857
+},
+{
+"id": "Tn063",
+"name": "Kuala Kubu Bharu",
+"lat": 3.5638,
+"lon": 101.6581
+},
+{
+"id": "Tn064",
+"name": "Rawang",
+"lat": 3.3213,
+"lon": 101.5767
+},
+{
+"id": "Tn065",
+"name": "Selayang",
+"lat": 3.2549,
+"lon": 101.6668
+},
+{
+"id": "Tn066",
+"name": "Pelabuhan Klang",
+"lat": 2.9996,
+"lon": 101.3929
+},
+{
+"id": "Tn067",
+"name": "Kepong",
+"lat": 3.214,
+"lon": 101.6402
+},
+{
+"id": "Tn068",
+"name": "Jerantut",
+"lat": 3.936,
+"lon": 102.3626
+},
+{
+"id": "Tn069",
+"name": "Batu Caves",
+"lat": 3.238,
+"lon": 101.682
+},
+{
+"id": "Tn070",
+"name": "Shah Alam",
+"lat": 3.0851,
+"lon": 101.5328
+},
+{
+"id": "Tn071",
+"name": "Sentul",
+"lat": 3.1833,
+"lon": 101.6833
+},
+{
+"id": "Tn072",
+"name": "Bentong",
+"lat": 3.3806,
+"lon": 102.0125
+},
+{
+"id": "Tn074",
+"name": "Damansara",
+"lat": 3.066,
+"lon": 101.548
+},
+{
+"id": "Tn075",
+"name": "Setapak",
+"lat": 3.207,
+"lon": 101.727
+},
+{
+"id": "Tn076",
+"name": "Petaling Jaya",
+"lat": 3.1073,
+"lon": 101.6067
+},
+{
+"id": "Tn077",
+"name": "Subang Jaya",
+"lat": 3.0438,
+"lon": 101.5806
+},
+{
+"id": "Tn078",
+"name": "Bangsar",
+"lat": 3.1294,
+"lon": 101.67
+},
+{
+"id": "Tn079",
+"name": "Kuala Lumpur",
+"lat": 3.1412,
+"lon": 101.6865
+},
+{
+"id": "Tn080",
+"name": "Bukit Bintang",
+"lat": 3.1466,
+"lon": 101.7102
+},
+{
+"id": "Tn081",
+"name": "Ampang",
+"lat": 3.15,
+"lon": 101.7667
+},
+{
+"id": "Tn082",
+"name": "Dungun",
+"lat": 4.775,
+"lon": 103.4162
+},
+{
+"id": "Tn083",
+"name": "Sungai Besi",
+"lat": 3.05,
+"lon": 101.7
+},
+{
+"id": "Tn084",
+"name": "Banting",
+"lat": 2.8136,
+"lon": 101.5019
+},
+{
+"id": "Tn085",
+"name": "Seri Kembangan",
+"lat": 3.0333,
+"lon": 101.7167
+},
+{
+"id": "Tn086",
+"name": "Cheras",
+"lat": 3.108,
+"lon": 101.726
+},
+{
+"id": "Tn087",
+"name": "Cyberjaya",
+"lat": 2.9228,
+"lon": 101.6572
+},
+{
+"id": "Tn088",
+"name": "Putrajaya",
+"lat": 2.9353,
+"lon": 101.6911
+},
+{
+"id": "Tn089",
+"name": "Paka",
+"lat": 4.6374,
+"lon": 103.4368
+},
+{
+"id": "Tn090",
+"name": "Kajang",
+"lat": 2.9942,
+"lon": 101.7887
+},
+{
+"id": "Tn091",
+"name": "Mentakab",
+"lat": 3.4854,
+"lon": 102.3484
+},
+{
+"id": "Tn092",
+"name": "Bangi",
+"lat": 2.9,
+"lon": 101.7833
+},
+{
+"id": "Tn093",
+"name": "Semenyih",
+"lat": 2.9516,
+"lon": 101.843
+},
+{
+"id": "Tn094",
+"name": "Kertih",
+"lat": 4.5141,
+"lon": 103.4483
+},
+{
+"id": "Tn095",
+"name": "Temerloh",
+"lat": 3.4506,
+"lon": 102.4176
+},
+{
+"id": "Tn096",
+"name": "Nilai",
+"lat": 2.8033,
+"lon": 101.7972
+},
+{
+"id": "Tn097",
+"name": "Sepang",
+"lat": 2.6931,
+"lon": 101.7498
+},
+{
+"id": "Tn098",
+"name": "Kemaman",
+"lat": 4.2758,
+"lon": 103.2262
+},
+{
+"id": "Tn099",
+"name": "Kuala Klawang",
+"lat": 2.9395,
+"lon": 102.0704
+},
+{
+"id": "Tn100",
+"name": "Jelebu",
+"lat": 3.0402,
+"lon": 102.1139
+},
+{
+"id": "Tn101",
+"name": "Triang",
+"lat": 3.2462,
+"lon": 102.4155
+},
+{
+"id": "Tn102",
+"name": "Bera",
+"lat": 3.3333,
+"lon": 102.5
+},
+{
+"id": "Tn103",
+"name": "Maran",
+"lat": 3.586,
+"lon": 102.773
+},
+{
+"id": "Tn104",
+"name": "Seremban",
+"lat": 2.7297,
+"lon": 101.9381
+},
+{
+"id": "Tn105",
+"name": "Port Dickson",
+"lat": 2.5246,
+"lon": 101.7965
+},
+{
+"id": "Tn106",
+"name": "Kuala Pilah",
+"lat": 2.7389,
+"lon": 102.2487
+},
+{
+"id": "Tn107",
+"name": "Rembau",
+"lat": 2.5897,
+"lon": 102.0913
+},
+{
+"id": "Tn108",
+"name": "Kuantan",
+"lat": 3.8077,
+"lon": 103.326
+},
+{
+"id": "Tn109",
+"name": "Jempol",
+"lat": 2.847,
+"lon": 102.4673
+},
+{
+"id": "Tn110",
+"name": "Tampin",
+"lat": 2.4701,
+"lon": 102.2302
+},
+{
+"id": "Tn111",
+"name": "Masjid Tanah",
+"lat": 2.3585,
+"lon": 102.1029
+},
+{
+"id": "Tn112",
+"name": "Alor Gajah",
+"lat": 2.3804,
+"lon": 102.2089
+},
+{
+"id": "Tn113",
+"name": "Tangga Batu",
+"lat": 2.2601,
+"lon": 102.1523
+},
+{
+"id": "Tn114",
+"name": "Pekan",
+"lat": 3.4836,
+"lon": 103.3996
+},
+{
+"id": "Tn115",
+"name": "Durian Tunggal",
+"lat": 2.3125,
+"lon": 102.2805
+},
+{
+"id": "Tn116",
+"name": "Muadzam Shah",
+"lat": 3.0627,
+"lon": 103.0892
+},
+{
+"id": "Tn117",
+"name": "Gemas",
+"lat": 2.5832,
+"lon": 102.6117
+},
+{
+"id": "Tn118",
+"name": "Ayer Keroh",
+"lat": 2.2654,
+"lon": 102.2801
+},
+{
+"id": "Tn119",
+"name": "Bandaraya Melaka",
+"lat": 2.196,
+"lon": 102.2405
+},
+{
+"id": "Tn120",
+"name": "Jasin",
+"lat": 2.3096,
+"lon": 102.4281
+},
+{
+"id": "Tn121",
+"name": "Tangkak",
+"lat": 2.2673,
+"lon": 102.5453
+},
+{
+"id": "Tn122",
+"name": "Merlimau",
+"lat": 2.1449,
+"lon": 102.4251
+},
+{
+"id": "Tn123",
+"name": "Segamat",
+"lat": 2.5148,
+"lon": 102.8158
+},
+{
+"id": "Tn124",
+"name": "Muar",
+"lat": 2.0442,
+"lon": 102.5689
+},
+{
+"id": "Tn125",
+"name": "Pagoh",
+"lat": 2.1495,
+"lon": 102.7704
+},
+{
+"id": "Tn126",
+"name": "Labis",
+"lat": 2.385,
+"lon": 103.021
+},
+{
+"id": "Tn127",
+"name": "Kuala Rompin",
+"lat": 2.8167,
+"lon": 103.4833
+},
+{
+"id": "Tn128",
+"name": "Yong Peng",
+"lat": 2.0136,
+"lon": 103.0659
+},
+{
+"id": "Tn129",
+"name": "Batu Pahat",
+"lat": 1.8548,
+"lon": 102.9325
+},
+{
+"id": "Tn130",
+"name": "Ayer Hitam",
+"lat": 1.915,
+"lon": 103.1808
+},
+{
+"id": "Tn131",
+"name": "Kluang",
+"lat": 2.0305,
+"lon": 103.3169
+},
+{
+"id": "Tn132",
+"name": "Mersing",
+"lat": 2.4312,
+"lon": 103.8405
+},
+{
+"id": "Tn133",
+"name": "Simpang Renggam",
+"lat": 1.825,
+"lon": 103.3107
+},
+{
+"id": "Tn134",
+"name": "Pontian",
+"lat": 1.5059,
+"lon": 103.3816
+},
+{
+"id": "Tn135",
+"name": "Kulai",
+"lat": 1.6561,
+"lon": 103.6032
+},
+{
+"id": "Tn136",
+"name": "Senai",
+"lat": 1.6006,
+"lon": 103.6419
+},
+{
+"id": "Tn137",
+"name": "Kota Tinggi",
+"lat": 1.7381,
+"lon": 103.8999
+},
+{
+"id": "Tn138",
+"name": "Iskandar Puteri",
+"lat": 1.3932,
+"lon": 103.6232
+},
+{
+"id": "Tn139",
+"name": "Johor Bahru",
+"lat": 1.4655,
+"lon": 103.7578
+},
+{
+"id": "Tn140",
+"name": "Pasir Gudang",
+"lat": 1.462,
+"lon": 103.9053
+},
+{
+"id": "Tn143",
+"name": "Kuah",
+"lat": 6.3265,
+"lon": 99.8432
+},
+{
+"id": "Tn144",
+"name": "Kubang Kerian",
+"lat": 6.0912,
+"lon": 102.2794
+},
+{
+"id": "Tn146",
+"name": "Tanjong Malim",
+"lat": 3.681,
+"lon": 101.5198
+},
+{
+"id": "Tn147",
+"name": "Meru",
+"lat": 3.1362,
+"lon": 101.4394
+},
+{
+"id": "Tn149",
+"name": "Bandar Baru Salak Tinggi",
+"lat": 2.8123,
+"lon": 101.7356
+},
+{
+"id": "Tn150",
+"name": "Jertih",
+"lat": 5.7336,
+"lon": 102.4897
+},
+{
+"id": "Tn151",
+"name": "Pekan Nenas",
+"lat": 1.51,
+"lon": 103.5141
+},
+{
+"id": "Tn153",
+"name": "Ulu Tiram",
+"lat": 1.6,
+"lon": 103.8167
+},
+{
+"id": "Tn154",
+"name": "Tanjong Karang",
+"lat": 3.4291,
+"lon": 101.179
+},
+{
+"id": "Tn157",
+"name": "Kuala Kedah",
+"lat": 6.1,
+"lon": 100.3
+},
+{
+"id": "Tn159",
+"name": "Skudai",
+"lat": 1.5374,
+"lon": 103.6578
+},
+{
+"id": "Tn161",
+"name": "Gurun",
+"lat": 5.8172,
+"lon": 100.4738
+},
+{
+"id": "Tn162",
+"name": "Serendah",
+"lat": 3.3646,
+"lon": 101.6041
+},
+{
+"id": "Tn163",
+"name": "Sungai Udang",
+"lat": 2.269,
+"lon": 102.1427
+},
+{
+"id": "Tn164",
+"name": "Serdang",
+"lat": 5.2037,
+"lon": 100.6248
+},
+{
+"id": "Tn165",
+"name": "Batu Berendam",
+"lat": 2.2487,
+"lon": 102.246
+},
+{
+"id": "Tn166",
+"name": "Telok Panglima Garang",
+"lat": 2.908,
+"lon": 101.4688
+},
+{
+"id": "Tn168",
+"name": "Bahau",
+"lat": 2.8079,
+"lon": 102.4049
+},
+{
+"id": "Tn169",
+"name": "Sabak",
+"lat": 3.7698,
+"lon": 100.9879
+},
+{
+"id": "Tn170",
+"name": "Gelugor",
+"lat": 5.4803,
+"lon": 100.4985
+},
+{
+"id": "Tn171",
+"name": "Puchong",
+"lat": 3.0,
+"lon": 101.6167
+},
+{
+"id": "Tn172",
+"name": "Tanjung Bungah",
+"lat": 5.4649,
+"lon": 100.2816
+},
+{
+"id": "Tn173",
+"name": "Tanjung Tokong",
+"lat": 5.4606,
+"lon": 100.3074
+},
+{
+"id": "Tn174",
+"name": "Bandar Utama",
+"lat": 3.1482,
+"lon": 101.6141
+},
+{
+"id": "Tn175",
+"name": "Sungai Ara",
+"lat": 1.1833,
+"lon": 111.8833
+},
+{
+"id": "Tn176",
+"name": "Juru",
+"lat": 5.312,
+"lon": 100.4423
+},
+{
+"id": "Tn177",
+"name": "Jawi",
+"lat": 5.2153,
+"lon": 100.4921
+},
+{
+"id": "Tn178",
+"name": "Sungai Besar",
+"lat": 3.6746,
+"lon": 100.9867
+},
+{
+"id": "Tn179",
+"name": "Kangar",
+"lat": 6.4414,
+"lon": 100.1986
+},
+{
+"id": "Tn180",
+"name": "Ulu Kelang",
+"lat": 3.18,
+"lon": 101.773
+},
+{
+"id": "Tn181",
+"name": "Klang",
+"lat": 3.0367,
+"lon": 101.4433
+},
+{
+"id": "Tn182",
+"name": "Marang",
+"lat": 5.2056,
+"lon": 103.2059
+},
+{
+"id": "Tn183",
+"name": "Kuala Berang",
+"lat": 5.0734,
+"lon": 103.0114
+},
+{
+"id": "Tn184",
+"name": "Kampong Raja",
+"lat": 6.2833,
+"lon": 100.65
+},
+{
+"id": "Tn185",
+"name": "Bandar Al-Muktafi Billah Shah",
+"lat": 4.6111,
+"lon": 103.2092
+},
+{
+"id": "Tn186",
+"name": "Cukai",
+"lat": 4.25,
+"lon": 103.4167
+},
+{
+"id": "Tn187",
+"name": "Kuching",
+"lat": 1.55,
+"lon": 110.3333
+},
+{
+"id": "Tn188",
+"name": "Sri Aman",
+"lat": 1.2472,
+"lon": 111.4528
+},
+{
+"id": "Tn189",
+"name": "Sarikei",
+"lat": 2.1167,
+"lon": 111.5167
+},
+{
+"id": "Tn190",
+"name": "Sibu",
+"lat": 2.3,
+"lon": 111.8167
+},
+{
+"id": "Tn191",
+"name": "Mukah",
+"lat": 2.8944,
+"lon": 112.0914
+},
+{
+"id": "Tn192",
+"name": "Kapit",
+"lat": 1.9955,
+"lon": 112.9325
+},
+{
+"id": "Tn193",
+"name": "Bintulu",
+"lat": 3.1667,
+"lon": 113.0333
+},
+{
+"id": "Tn194",
+"name": "Miri",
+"lat": 4.3993,
+"lon": 113.9916
+},
+{
+"id": "Tn195",
+"name": "Limbang",
+"lat": 4.7548,
+"lon": 115.0101
+},
+{
+"id": "Tn196",
+"name": "Kota Kinabalu",
+"lat": 5.9749,
+"lon": 116.0724
+},
+{
+"id": "Tn197",
+"name": "Keningau",
+"lat": 5.3378,
+"lon": 116.1602
+},
+{
+"id": "Tn198",
+"name": "Tuaran",
+"lat": 6.1774,
+"lon": 116.2314
+},
+{
+"id": "Tn199",
+"name": "Tawau",
+"lat": 4.2448,
+"lon": 117.8911
+},
+{
+"id": "Tn200",
+"name": "Sandakan",
+"lat": 5.8402,
+"lon": 118.1179
+},
+{
+"id": "Tn201",
+"name": "Lahad Datu",
+"lat": 5.023,
+"lon": 118.329
+}
+]
+}

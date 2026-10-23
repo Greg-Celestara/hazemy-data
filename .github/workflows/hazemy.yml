@@ -65,6 +65,13 @@ jobs:
           path: cache/firms_last.json
           key: hazemy-firms-restore-${{ github.run_id }}
           restore-keys: hazemy-firms-
+      - name: Restore the last MetMalaysia forecast and warnings
+        # Same pattern as FIRMS: newest snapshot by prefix, used only if under 24 h old.
+        uses: actions/cache/restore@v4
+        with:
+          path: cache/met_last.json
+          key: hazemy-met-restore-${{ github.run_id }}
+          restore-keys: hazemy-met-
       - name: Restore the GFS downloads
         # No exact key exists on purpose: the newest saved snapshot is restored by prefix.
         uses: actions/cache/restore@v4
@@ -99,6 +106,12 @@ jobs:
         with:
           path: cache/firms_last.json
           key: hazemy-firms-${{ github.run_id }}
+      - name: Save the MetMalaysia forecast and warnings
+        if: hashFiles('cache/met_last.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: cache/met_last.json
+          key: hazemy-met-${{ github.run_id }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,0 +1,492 @@
+[
+{
+"location": {
+"location_id": "Ds001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-23",
+"morning_forecast": "Ribut petir di beberapa tempat",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Ribut petir di beberapa tempat",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 32
+},
+{
+"location": {
+"location_id": "Ds001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-24",
+"morning_forecast": "Ribut petir di beberapa tempat",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Ribut petir di kebanyakan tempat",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 32
+},
+{
+"location": {
+"location_id": "Ds001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-25",
+"morning_forecast": "Ribut petir di beberapa tempat",
+"afternoon_forecast": "Ribut petir di kebanyakan tempat",
+"night_forecast": "Ribut petir di beberapa tempat",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 30
+},
+{
+"location": {
+"location_id": "Ds001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-26",
+"morning_forecast": "Ribut petir menyeluruh",
+"afternoon_forecast": "Ribut petir di kebanyakan tempat",
+"night_forecast": "Ribut petir di beberapa tempat",
+"summary_forecast": "Ribut petir menyeluruh",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 30
+},
+{
+"location": {
+"location_id": "Ds001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-27",
+"morning_forecast": "Ribut petir di beberapa tempat",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Pagi dan Petang",
+"min_temp": 24,
+"max_temp": 31
+},
+{
+"location": {
+"location_id": "Ds001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-28",
+"morning_forecast": "Tiada Hujan",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Petang",
+"min_temp": 24,
+"max_temp": 33
+},
+{
+"location": {
+"location_id": "Ds001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-29",
+"morning_forecast": "Tiada Hujan",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Petang",
+"min_temp": 24,
+"max_temp": 33
+},
+{
+"location": {
+"location_id": "Dv501",
+"location_name": "Kuching"
+},
+"date": "2026-10-23",
+"morning_forecast": "Hujan di beberapa tempat",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Hujan di beberapa tempat",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 34
+},
+{
+"location": {
+"location_id": "Dv501",
+"location_name": "Kuching"
+},
+"date": "2026-10-24",
+"morning_forecast": "Tiada Hujan",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Hujan di beberapa tempat",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Petang dan Malam",
+"min_temp": 24,
+"max_temp": 34
+},
+{
+"location": {
+"location_id": "Dv501",
+"location_name": "Kuching"
+},
+"date": "2026-10-25",
+"morning_forecast": "Tiada Hujan",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Hujan di beberapa tempat",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Petang dan Malam",
+"min_temp": 24,
+"max_temp": 34
+},
+{
+"location": {
+"location_id": "Dv501",
+"location_name": "Kuching"
+},
+"date": "2026-10-26",
+"morning_forecast": "Hujan di beberapa tempat",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Hujan di beberapa tempat",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 34
+},
+{
+"location": {
+"location_id": "Dv501",
+"location_name": "Kuching"
+},
+"date": "2026-10-27",
+"morning_forecast": "Hujan di beberapa tempat",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Hujan di beberapa tempat",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 34
+},
+{
+"location": {
+"location_id": "Dv501",
+"location_name": "Kuching"
+},
+"date": "2026-10-28",
+"morning_forecast": "Hujan di beberapa tempat",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Hujan di beberapa tempat",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 34
+},
+{
+"location": {
+"location_id": "Dv501",
+"location_name": "Kuching"
+},
+"date": "2026-10-29",
+"morning_forecast": "Hujan di beberapa tempat",
+"afternoon_forecast": "Ribut petir di beberapa tempat",
+"night_forecast": "Hujan di beberapa tempat",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 34
+},
+{
+"location": {
+"location_id": "Rc001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-23",
+"morning_forecast": "Ribut petir",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Ribut petir",
+"summary_forecast": "Ribut petir",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 32
+},
+{
+"location": {
+"location_id": "Rc001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-24",
+"morning_forecast": "Ribut petir",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Ribut petir",
+"summary_forecast": "Ribut petir",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 32
+},
+{
+"location": {
+"location_id": "Rc001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-25",
+"morning_forecast": "Ribut petir",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Ribut petir",
+"summary_forecast": "Ribut petir",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 30
+},
+{
+"location": {
+"location_id": "Rc001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-26",
+"morning_forecast": "Ribut petir",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Ribut petir",
+"summary_forecast": "Ribut petir",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 30
+},
+{
+"location": {
+"location_id": "Rc001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-27",
+"morning_forecast": "Ribut petir",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Ribut petir",
+"summary_when": "Pagi dan Petang",
+"min_temp": 24,
+"max_temp": 31
+},
+{
+"location": {
+"location_id": "Rc001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-28",
+"morning_forecast": "Tiada Hujan",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Ribut petir",
+"summary_when": "Petang",
+"min_temp": 24,
+"max_temp": 31
+},
+{
+"location": {
+"location_id": "Rc001",
+"location_name": "Langkawi"
+},
+"date": "2026-10-29",
+"morning_forecast": "Tiada Hujan",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Ribut petir",
+"summary_when": "Petang",
+"min_temp": 24,
+"max_temp": 31
+},
+{
+"location": {
+"location_id": "St001",
+"location_name": "Perlis"
+},
+"date": "2026-10-23",
+"morning_forecast": "Ribut petir di beberapa tempat di kawasan pantai",
+"afternoon_forecast": "Ribut petir di beberapa tempat di kawasan pedalaman",
+"night_forecast": "Ribut petir di beberapa tempat di kawasan pedalaman",
+"summary_forecast": "Ribut petir di beberapa tempat di kawasan pantai",
+"summary_when": "Sepanjang Hari",
+"min_temp": 23,
+"max_temp": 33
+},
+{
+"location": {
+"location_id": "St001",
+"location_name": "Perlis"
+},
+"date": "2026-10-24",
+"morning_forecast": "Ribut petir di beberapa tempat",
+"afternoon_forecast": "Ribut petir di beberapa tempat di kawasan pedalaman",
+"night_forecast": "Ribut petir di kebanyakan tempat di kawasan pedalaman",
+"summary_forecast": "Ribut petir di beberapa tempat",
+"summary_when": "Sepanjang Hari",
+"min_temp": 23,
+"max_temp": 33
+},
+{
+"location": {
+"location_id": "St001",
+"location_name": "Perlis"
+},
+"date": "2026-10-25",
+"morning_forecast": "Ribut petir di beberapa tempat di kawasan pantai",
+"afternoon_forecast": "Ribut petir di kebanyakan tempat di kawasan pedalaman",
+"night_forecast": "Ribut petir di beberapa tempat di kawasan pedalaman",
+"summary_forecast": "Ribut petir di beberapa tempat di kawasan pantai",
+"summary_when": "Sepanjang Hari",
+"min_temp": 23,
+"max_temp": 30
+},
+{
+"location": {
+"location_id": "St001",
+"location_name": "Perlis"
+},
+"date": "2026-10-26",
+"morning_forecast": "Ribut petir di kebanyakan tempat di kawasan pantai",
+"afternoon_forecast": "Ribut petir di kebanyakan tempat di kawasan pedalaman",
+"night_forecast": "Ribut petir di beberapa tempat di kawasan pedalaman",
+"summary_forecast": "Ribut petir di kebanyakan tempat di kawasan pantai",
+"summary_when": "Sepanjang Hari",
+"min_temp": 23,
+"max_temp": 30
+},
+{
+"location": {
+"location_id": "St001",
+"location_name": "Perlis"
+},
+"date": "2026-10-27",
+"morning_forecast": "Ribut petir di beberapa tempat di kawasan pantai",
+"afternoon_forecast": "Ribut petir di beberapa tempat di kawasan pedalaman",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Ribut petir di beberapa tempat di kawasan pantai",
+"summary_when": "Pagi dan Petang",
+"min_temp": 23,
+"max_temp": 32
+},
+{
+"location": {
+"location_id": "St001",
+"location_name": "Perlis"
+},
+"date": "2026-10-28",
+"morning_forecast": "Tiada Hujan",
+"afternoon_forecast": "Ribut petir di beberapa tempat di kawasan pedalaman",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Ribut petir di beberapa tempat di kawasan pedalaman",
+"summary_when": "Petang",
+"min_temp": 23,
+"max_temp": 33
+},
+{
+"location": {
+"location_id": "St001",
+"location_name": "Perlis"
+},
+"date": "2026-10-29",
+"morning_forecast": "Tiada Hujan",
+"afternoon_forecast": "Ribut petir di beberapa tempat di kawasan pedalaman",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Ribut petir di beberapa tempat di kawasan pedalaman",
+"summary_when": "Petang",
+"min_temp": 23,
+"max_temp": 33
+},
+{
+"location": {
+"location_id": "Tn003",
+"location_name": "Alor Star"
+},
+"date": "2026-10-23",
+"morning_forecast": "Ribut petir",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Ribut petir",
+"summary_forecast": "Ribut petir",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 33
+},
+{
+"location": {
+"location_id": "Tn003",
+"location_name": "Alor Star"
+},
+"date": "2026-10-24",
+"morning_forecast": "Ribut petir",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Ribut petir",
+"summary_forecast": "Ribut petir",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 33
+},
+{
+"location": {
+"location_id": "Tn003",
+"location_name": "Alor Star"
+},
+"date": "2026-10-25",
+"morning_forecast": "Ribut petir",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Ribut petir",
+"summary_forecast": "Ribut petir",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 30
+},
+{
+"location": {
+"location_id": "Tn003",
+"location_name": "Alor Star"
+},
+"date": "2026-10-26",
+"morning_forecast": "Ribut petir",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Ribut petir",
+"summary_forecast": "Ribut petir",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 30
+},
+{
+"location": {
+"location_id": "Tn003",
+"location_name": "Alor Star"
+},
+"date": "2026-10-27",
+"morning_forecast": "Ribut petir",
+"afternoon_forecast": "Ribut petir",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Ribut petir",
+"summary_when": "Pagi dan Petang",
+"min_temp": 24,
+"max_temp": 31
+},
+{
+"location": {
+"location_id": "Tn003",
+"location_name": "Alor Star"
+},
+"date": "2026-10-28",
+"morning_forecast": "Tiada Hujan",
+"afternoon_forecast": "Tiada Hujan",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Tiada Hujan",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 31
+},
+{
+"location": {
+"location_id": "Tn003",
+"location_name": "Alor Star"
+},
+"date": "2026-10-29",
+"morning_forecast": "Tiada Hujan",
+"afternoon_forecast": "Tiada Hujan",
+"night_forecast": "Tiada Hujan",
+"summary_forecast": "Tiada Hujan",
+"summary_when": "Sepanjang Hari",
+"min_temp": 24,
+"max_temp": 31
+}
+]
