@@ -363,12 +363,13 @@ class Bundles(unittest.TestCase):
 
     def test_prune_removes_only_old_cycles(self):
         with tempfile.TemporaryDirectory() as tmp:
-            for name in ("gfs_2026101906_f000_w850.grib", "gfs_2026101500_f000_w850.grib",
-                         "cams_x.grib"):
+            kept_edge = "gfs_2026101500_f000_w850.grib"  # exactly 102 h (KEEP_H) before CYCLE
+            for name in ("gfs_2026101906_f000_w850.grib", kept_edge,
+                         "gfs_2026101418_f000_w850.grib", "cams_x.grib"):
                 open(os.path.join(tmp, name), "wb").close()
             gfs_extra.prune_cache(tmp, CYCLE)
             self.assertEqual(sorted(os.listdir(tmp)),
-                             ["cams_x.grib", "gfs_2026101906_f000_w850.grib"])
+                             ["cams_x.grib", kept_edge, "gfs_2026101906_f000_w850.grib"])
 
     def test_decode_crops_and_checks_count(self):
         raw = make_message(np.arange(81 * 181, dtype=float).reshape(81, 181), lat_first=40.0,

@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from hazemy.common import Budget, PipelineError, RetriesExhausted
 from hazemy.firms import SOURCES, fetch_detection_rows, rows_with_fallback
 from tests.test_data_sources import HEADER, row
-from tests.test_job import FakeResponse
+from tests.test_job import FakeResponse, is_dated_firms_url
 
 NOW = datetime(2026, 10, 19, 10, 30, tzinfo=timezone.utc)
 UNREACHABLE = urllib.error.URLError("Network is unreachable")
@@ -28,7 +28,7 @@ class Network:
         self.lookups.append(socket.getaddrinfo)
         if self.calls <= self.failures:
             raise self.error
-        return FakeResponse(self.body)
+        return FakeResponse(HEADER if is_dated_firms_url(req.full_url) else self.body)
 
 
 class Ipv4Attempt(unittest.TestCase):
@@ -51,7 +51,7 @@ class Ipv4Attempt(unittest.TestCase):
         self.assertIn("FIRMS VIIRS_SNPP_NRT: succeeded over IPv4 after 3 failed attempts",
                       self.lines)
         self.assertEqual(net.timeouts[3], 60)
-        self.assertEqual(net.calls, 3 + 1 + (len(SOURCES) - 1))
+        self.assertEqual(net.calls, 3 + 1 + (2 * len(SOURCES) - 1))  # two requests per source
 
     def test_ipv4_failure_logs_the_error_and_reraises_for_the_fallback(self):
         net = Network(failures=99)

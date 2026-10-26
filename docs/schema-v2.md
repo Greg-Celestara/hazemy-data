@@ -2,6 +2,7 @@
 
 Served at `https://greg-celestara.github.io/hazemy-data/v2/hazemy.json`. `v1/hazemy.json` keeps
 being published unchanged (schema.md) for installed v1 apps. Same job, same hourly run.
+The optional `v2/wind.json` is described in [schema-wind.md](schema-wind.md).
 Nothing in it identifies a user. Model values are **model estimates**; Singapore `nea` values are
 **measured** by NEA.
 

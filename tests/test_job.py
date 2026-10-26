@@ -1,6 +1,7 @@
 """End-to-end behaviour of the job with fake network boundaries and synthetic GRIB files."""
 import json
 import os
+import re
 import tempfile
 import unittest
 import urllib.error
@@ -52,7 +53,15 @@ class FakeResponse:
 
 
 def fake_urlopen(csv_text):
-    return lambda req, timeout=None: FakeResponse(csv_text)
+    """The same detections for the 5-day FIRMS request and none for the dated one-day request,
+    so each detection is seen once, as with the real API (the two ranges do not overlap)."""
+    def urlopen(req, timeout=None):
+        return FakeResponse(HEADER if is_dated_firms_url(req.full_url) else csv_text)
+    return urlopen
+
+
+def is_dated_firms_url(url: str) -> bool:
+    return "firms" in url and re.search(r"/\d{4}-\d{2}-\d{2}$", url) is not None
 
 
 class JobTest(unittest.TestCase):
