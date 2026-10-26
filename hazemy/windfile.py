@@ -222,6 +222,14 @@ def decode(doc: dict) -> tuple:
     return fields, times
 
 
+# The app's transfer budget for this file (handoff acceptance 2). Going over it breaks nothing,
+# so it is a logged warning, not a failure: a peak fire season can push the fire days past it.
+GZIP_TARGET_BYTES = 250_000
+
+
 def size_line(path: str, body: bytes) -> str:
-    return (f"wrote {path} ({len(body)} bytes, "
-            f"{len(gzip.compress(body, compresslevel=9))} bytes gzip)")
+    packed = len(gzip.compress(body, compresslevel=9))
+    line = f"wrote {path} ({len(body)} bytes, {packed} bytes gzip)"
+    if packed > GZIP_TARGET_BYTES:
+        line += f" WARNING: over the {GZIP_TARGET_BYTES} byte gzip target"
+    return line

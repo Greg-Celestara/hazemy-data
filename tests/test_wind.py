@@ -380,8 +380,12 @@ class WindJob(unittest.TestCase):
             self.assertEqual((self.read("v1"), self.read("v2")), (v1, v2))
 
 
-if __name__ == "__main__":
-    unittest.main()
+class SizeLineTest(unittest.TestCase):
+    def test_warns_only_over_target(self):
+        small = windfile.size_line("w.json", b"{}")
+        big = windfile.size_line("w.json", os.urandom(windfile.GZIP_TARGET_BYTES + 1000))
+        self.assertNotIn("WARNING", small)
+        self.assertIn("WARNING", big)
 
 
 class RealFixtureTest(unittest.TestCase):
@@ -397,3 +401,7 @@ class RealFixtureTest(unittest.TestCase):
                            check=True, capture_output=True)
             with open(out) as fh, open(os.path.join(here, "wind_paths.json")) as ref:
                 self.assertEqual(json.load(fh), json.load(ref))
+
+
+if __name__ == "__main__":
+    unittest.main()
