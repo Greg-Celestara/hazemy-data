@@ -18,9 +18,12 @@ from hazemy.common import ATTEMPTS, PipelineError, RetriesExhausted, fmt, http_g
 SOURCES = ("VIIRS_SNPP_NRT", "VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT")
 BBOX = (95, -6, 120, 8)  # west, south, east, north
 # The day range counts back from the current UTC date, which is nearly empty just after 00:00
-# UTC, so ask for 4 days and cut to 72 h ourselves.
-DAY_RANGE = 4
-WINDOW_H = 72
+# UTC, so ask for more days than hours needed and cut to the window ourselves. The area API
+# accepts at most 5 days per request.
+DAY_RANGE = 5
+WINDOW_H = 72      # every existing product
+HISTORY_H = 120    # fetched and saved; wind.json shows five days of fires
+HISTORY_DAYS = HISTORY_H // 24
 TOP_N = 5
 COUNTRY_CODES = {"IDN": "ID", "MYS": "MY", "BRN": "BN"}
 REQUIRED_COLUMNS = ("latitude", "longitude", "acq_date", "acq_time", "confidence")
@@ -30,10 +33,19 @@ MAX_SAVED_AGE = timedelta(hours=24)
 IPV4_TIMEOUT_S = 60
 
 
-def firms_url(key: str, source: str) -> str:
+def firms_url(key: str, source: str, days: int = DAY_RANGE, start: str = None) -> str:
+    """Area API URL: the last `days` UTC dates, or `days` dates from `start` (YYYY-MM-DD)."""
     west, south, east, north = BBOX
-    return (f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{key}/{source}/"
-            f"{west},{south},{east},{north}/{DAY_RANGE}")
+    url = (f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{key}/{source}/"
+           f"{west},{south},{east},{north}/{days}")
+    return url if start is None else f"{url}/{start}"
+
+
+def history_urls(key: str, source: str, now: datetime) -> list:
+    """The two requests that cover HISTORY_H: today and the 4 UTC dates before, then the date
+    before that (one request is limited to 5 days)."""
+    first = (now.astimezone(timezone.utc) - timedelta(days=HISTORY_DAYS)).strftime("%Y-%m-%d")
+    return [firms_url(key, source), firms_url(key, source, 1, first)]
 
 
 def parse_csv(text: str, source: str, now: datetime) -> list:
@@ -41,8 +53,9 @@ def parse_csv(text: str, source: str, now: datetime) -> list:
     return [(lat, lon) for lat, lon, _ in parse_rows(text, source, now)]
 
 
-def parse_rows(text: str, source: str, now: datetime) -> list:
-    """[(lat, lon, acquired_utc)] of detections in the last 72 h, low-confidence ones dropped.
+def parse_rows(text: str, source: str, now: datetime, window_h: int = WINDOW_H) -> list:
+    """[(lat, lon, acquired_utc)] of detections in the last `window_h` (72) h, low confidence
+    ones dropped.
 
     FIRMS answers an empty window with just the header, which gives an empty list. A body
     without the expected columns (e.g. an error message with HTTP 200) raises.
@@ -52,7 +65,7 @@ def parse_rows(text: str, source: str, now: datetime) -> list:
     if missing:
         raise PipelineError(f"FIRMS {source}: response lacks column(s) {missing}: "
                             f"{text[:120]!r}")
-    oldest, newest = now - timedelta(hours=WINDOW_H), now + CLOCK_SKEW
+    oldest, newest = now - timedelta(hours=window_h), now + CLOCK_SKEW
     points = []
     for line, row in enumerate(reader, start=2):
         try:
@@ -111,12 +124,14 @@ def get_with_ipv4_retry(url: str, source: str, budget, *, log=print, **http) -> 
 
 
 def fetch_detection_rows(key: str, now: datetime, budget, *, log=print, **http) -> list:
-    """[(lat, lon, acquired_utc)] from all three VIIRS sources."""
+    """[(lat, lon, acquired_utc)] of the last HISTORY_H h from all three VIIRS sources."""
     points = []
     for source in SOURCES:
-        body = get_with_ipv4_retry(firms_url(key, source), source, budget, log=log, **http)
-        found = parse_rows(body.decode("utf-8", "replace"), source, now)
-        log(f"FIRMS {source}: {len(found)} detections in the last {WINDOW_H} h")
+        found = []
+        for url in history_urls(key, source, now):
+            body = get_with_ipv4_retry(url, source, budget, log=log, **http)
+            found.extend(parse_rows(body.decode("utf-8", "replace"), source, now, HISTORY_H))
+        log(f"FIRMS {source}: {len(found)} detections in the last {HISTORY_H} h")
         points.extend(found)
     return points
 
@@ -135,7 +150,7 @@ def save_rows(cache_dir: str, rows: list, fetched: datetime) -> None:
 def load_saved_rows(cache_dir: str, now: datetime):
     """(rows, fetched) from the saved copy if fetched within 24 h and readable, else None.
 
-    Detections that have since aged out of the 72 h window are dropped.
+    Detections that have since aged out of the 120 h window are dropped.
     """
     path = os.path.join(cache_dir, SAVED_NAME)
     try:
@@ -147,13 +162,13 @@ def load_saved_rows(cache_dir: str, now: datetime):
         return None
     if not now - MAX_SAVED_AGE < fetched <= now + CLOCK_SKEW:
         return None
-    oldest = now - timedelta(hours=WINDOW_H)
+    oldest = now - timedelta(hours=HISTORY_H)
     return [r for r in rows if r[2] > oldest], fetched
 
 
 def rows_with_fallback(key: str, now: datetime, clock, budget, cache_dir: str, *,
                        log=print, **http) -> tuple:
-    """(rows, time of those detections or None). A FIRMS outage is not fatal.
+    """(rows of the last 120 h, time of those detections or None). A FIRMS outage is not fatal.
 
     On success the rows are saved. On failure the saved copy is used when under 24 h old;
     otherwise the result is no detections at all.

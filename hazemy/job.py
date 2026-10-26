@@ -15,12 +15,13 @@ from shapely.ops import unary_union
 
 from hazemy import cams, compute, drivers, firms, gfs, gfs_extra, met, output, output_v2
 from hazemy import grid as gridmod
-from hazemy import singapore, trajectory, weather
+from hazemy import singapore, trajectory, weather, windfile
 from hazemy.common import (Budget, PipelineError, http_get, make_logger, require_env,
                            utc_now)
 
 DEFAULT_OUT = os.path.join("site", "v1", "hazemy.json")
 DEFAULT_OUT_V2 = os.path.join("site", "v2", "hazemy.json")
+DEFAULT_OUT_WIND = os.path.join("site", "v2", "wind.json")
 PREVIOUS_V2_URL = "https://greg-celestara.github.io/hazemy-data/v2/hazemy.json"
 DEFAULT_CACHE = "cache"
 DEFAULT_GFS_CACHE = "cache-gfs"
@@ -61,7 +62,7 @@ def cams_series(env, now, cells, cache_dir, budget, log, retrieve) -> tuple:
     return series, run
 
 
-def run_job(env, *, out=DEFAULT_OUT, out_v2=None, cache_dir=DEFAULT_CACHE,
+def run_job(env, *, out=DEFAULT_OUT, out_v2=None, out_wind=None, cache_dir=DEFAULT_CACHE,
             gfs_cache_dir=DEFAULT_GFS_CACHE, now_fn=utc_now, log=print,
             retrieve=cams.retrieve_grib, fetch_wind=gfs.fetch_wind_messages,
             fetch_bundle=gfs_extra.fetch_bundle, fetch_wx=None, http=None) -> int:
@@ -71,6 +72,9 @@ def run_job(env, *, out=DEFAULT_OUT, out_v2=None, cache_dir=DEFAULT_CACHE,
     given, in a guarded block: if it fails, the error is logged, the previously published v2 is
     downloaded into `out_v2` (nothing is written if that fails too) and the exit code is still 0
     so the deploy publishes v1.
+
+    wind.json is built only when `out_wind` is given, after v2 but independent of it, in its own
+    guarded block: on failure the error is logged and no file is written.
     """
     safe_log = make_logger([env.get("ADS_API_KEY"), env.get("FIRMS_MAP_KEY")], log)
     memo = {}
@@ -95,6 +99,8 @@ def run_job(env, *, out=DEFAULT_OUT, out_v2=None, cache_dir=DEFAULT_CACHE,
         return 1
     if out_v2 is not None:
         _publish_v2(ctx, budget, shared, out_v2)
+    if out_wind is not None:
+        _publish_wind(ctx, budget, shared, out_wind)
     return 0
 
 
@@ -114,6 +120,21 @@ def _publish_v2(ctx, budget, shared, out_v2) -> None:
     except Exception as err:  # noqa: BLE001 - v2 must never stop v1 from being published
         log(f"ERROR: v2 failed, v1 is still published. {type(err).__name__}: {err}")
         _restore_previous_v2(ctx, budget, out_v2)
+
+
+def _publish_wind(ctx, budget, shared, out_wind) -> None:
+    log = ctx["log"]
+    try:
+        doc = windfile.build(
+            now=shared["now"], newest=shared["parts"]["gfs_run"],
+            firms_updated=shared["parts"]["firms_updated"], rows=shared["rows_120h"],
+            provinces=shared["provinces"], cache_dir=ctx["gfs_cache"], budget=budget,
+            fetch=ctx["fetch_bundle"], log=log)
+        body = windfile.validate(doc)
+        output.write_atomic(out_wind, body)
+        log(windfile.size_line(out_wind, body))
+    except Exception as err:  # noqa: BLE001 - never affects v1, v2 or exit code
+        log(f"ERROR: wind.json failed, publishing without it. {type(err).__name__}: {err}")
 
 
 def _restore_previous_v2(ctx, budget, out_v2) -> None:
@@ -146,9 +167,11 @@ def _build_v1(ctx, budget) -> tuple:
     cells = _cells(provinces, False)
     log(f"{len(cells)} cells within {gridmod.LAND_RADIUS_KM:.0f} km of Malaysia")
     air, wind, cams_run, gfs_run, _ = _cell_values(ctx, now, cells, budget)
-    rows, firms_updated = firms.rows_with_fallback(
+    rows_120h, firms_updated = firms.rows_with_fallback(
         env["FIRMS_MAP_KEY"], now, ctx["now_fn"], budget, ctx["cache_dir"], log=log,
         **ctx["http"])
+    oldest = now - timedelta(hours=firms.WINDOW_H)
+    rows = [r for r in rows_120h if r[2] > oldest]  # every existing product uses 72 h only
     fires = firms.count_by_province([(r[0], r[1]) for r in rows], provinces)
     parts = {"generated": now, "cams_run": cams_run, "firms_fetched": firms_updated or ctx["now_fn"](),
              "firms_updated": firms_updated, "gfs_run": gfs_run}
@@ -157,7 +180,7 @@ def _build_v1(ctx, budget) -> tuple:
     body = output.validate(doc)
     log(f"downloaded {budget.total} bytes so far")
     return body, {"now": now, "parts": parts, "fires": fires, "rows": rows,
-                  "provinces": provinces}
+                  "rows_120h": rows_120h, "provinces": provinces}
 
 
 def _cell_values(ctx, now, cells, budget) -> tuple:
@@ -275,10 +298,13 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="python -m hazemy", description=__doc__)
     parser.add_argument("--out", default=DEFAULT_OUT, help="output file (default %(default)s)")
     parser.add_argument("--out-v2", default=DEFAULT_OUT_V2, help="v2 file (default %(default)s)")
+    parser.add_argument("--out-wind", default=DEFAULT_OUT_WIND,
+                        help="wind file (default %(default)s)")
     parser.add_argument("--cache", default=DEFAULT_CACHE, help="CAMS download cache directory")
     parser.add_argument("--gfs-cache", default=DEFAULT_GFS_CACHE, help="GFS cache directory")
     args = parser.parse_args(argv)
-    return run_job(os.environ, out=args.out, out_v2=args.out_v2, cache_dir=args.cache,
+    return run_job(os.environ, out=args.out, out_v2=args.out_v2,
+                   out_wind=args.out_wind, cache_dir=args.cache,
                    gfs_cache_dir=args.gfs_cache)
 
 

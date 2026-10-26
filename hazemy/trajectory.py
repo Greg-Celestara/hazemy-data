@@ -82,13 +82,18 @@ def _inside(lats, lons):
     return (lons >= west) & (lons <= east) & (lats >= south) & (lats <= north)
 
 
-def back_trajectories(fields: dict, times: list, lats, lons, start: datetime = None) -> list:
+def back_trajectories(fields: dict, times: list, lats, lons, start: datetime = None, *,
+                      every_h: int = HOURS_PER_POINT) -> list:
     """One list of (lat, lon) per start point, newest first, at most POINTS long.
+
+    `every_h` is the spacing of the recorded points; 1 gives hourly points (49 of them).
 
     `fields` is {valid: (u, v, geometry)}; the air arrives at `start` (default: the last slice
     in `times`) and `times` must cover 48 h before it. A path ends before the first point
     outside BOX.
     """
+    if every_h < 1 or (POINTS - 1) * HOURS_PER_POINT % every_h:
+        raise PipelineError(f"every_h must divide 48 h, got {every_h}.")
     last = len(times) - 1
     start_pos = last if start is None else (start - times[0]) / STEP
     if start_pos > last + 1e-9 or start_pos - (POINTS - 1) < -1e-9:
@@ -108,7 +113,7 @@ def back_trajectories(fields: dict, times: list, lats, lons, start: datetime = N
         # A stopped path keeps integrating from its last position so arrays stay in the grid.
         lats = np.where(alive, new_lat, lats)
         lons = np.where(alive, new_lon, lons)
-        if (hour + 1) % HOURS_PER_POINT == 0:
+        if (hour + 1) % every_h == 0:
             for k in np.where(alive)[0]:
                 paths[k].append((float(lats[k]), float(lons[k])))
     return paths

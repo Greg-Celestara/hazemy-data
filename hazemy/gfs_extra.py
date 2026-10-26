@@ -18,8 +18,9 @@ LEVEL_850 = "850 mb"
 # west, east, south, north: the 0.5 degree global field is cut to this to keep memory small. It
 # leaves a wide margin around the trajectory box (90-125 E, 12 S-14 N) and the HazeMY grid.
 CROP = (86.0, 129.0, -16.0, 18.0)
-# Cached cycles older than this are deleted; 9 cycles of trajectory data span 48 h plus margin.
-KEEP_H = 9 * CYCLE_H + 6
+# Cached cycles older than this are deleted. wind.json reaches back 96 h from "now", which is 5
+# to 11 h after the newest cycle; a path ending 48 h ago starts 96 h ago.
+KEEP_H = 17 * CYCLE_H
 
 
 def parse_idx_tail(text: str) -> list:
