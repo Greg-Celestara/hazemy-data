@@ -80,13 +80,13 @@ class Encoding(unittest.TestCase):
 
 
 class TimeList(unittest.TestCase):
-    def test_covers_96_h_back_and_72_h_ahead_for_any_hour(self):
+    def test_covers_96_h_back_and_78_h_ahead_for_any_hour(self):
         for hour in (0, 2, 5, 23):
             start = datetime(2026, 10, 19, hour, tzinfo=timezone.utc)
             times = windfile.slice_times(start)
             self.assertLessEqual(times[0], start - timedelta(hours=96), hour)
-            self.assertGreaterEqual(times[-1], start + timedelta(hours=72), hour)
-            self.assertIn(len(times), (57, 58), hour)
+            self.assertGreaterEqual(times[-1], start + timedelta(hours=78), hour)
+            self.assertIn(len(times), (59, 60), hour)
             self.assertTrue(all(b - a == timedelta(hours=3) for a, b in zip(times, times[1:])))
             self.assertTrue(all(t.hour % 3 == 0 for t in times))
 
@@ -115,7 +115,7 @@ class CycleFallback(unittest.TestCase):
         self.assertEqual(len(entries), len(windfile.slice_times(START)))
         future = [e for e in entries if parse_time(e["valid_utc"]) > NEWEST]
         self.assertTrue(all(e["cycle_utc"] == fmt(NEWEST) for e in future))
-        self.assertEqual(future[-1]["fhr"], 84)
+        self.assertEqual(future[-1]["fhr"], 90)
 
     def test_previous_cycle_is_used_when_the_newest_fails(self):
         (entries, cycle), seen = self.load(lambda c: c == NEWEST)
@@ -196,7 +196,7 @@ class Validate(unittest.TestCase):
     def test_times_not_reaching_96_h_back_are_rejected(self):
         self.invalid(lambda d: d["times"].pop(0))
 
-    def test_times_not_reaching_72_h_ahead_are_rejected(self):
+    def test_times_not_reaching_78_h_ahead_are_rejected(self):
         self.invalid(lambda d: d["times"].pop())
 
     def test_wrong_byte_length_is_rejected(self):
