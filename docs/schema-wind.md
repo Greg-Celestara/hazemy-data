@@ -27,7 +27,7 @@ Compact JSON (no spaces).
 | `grid` | `{"lat_first": -12.0, "lon_first": 90.0, "step_deg": 0.5, "nlat": 53, "nlon": 71}` |
 | `scale_ms` | `0.5`: metres per second per integer step. |
 | `step_h` | `3`: hours between `times` entries. |
-| `times` | Ascending, contiguous, every 3 h. 49 or 50 entries covering `[start_utc - 96 h, start_utc + 48 h]`: the first is at or before `start_utc - 96 h`, the last at or after `start_utc + 48 h`. |
+| `times` | Ascending, contiguous, every 3 h. 57 or 58 entries covering `[start_utc - 96 h, start_utc + 72 h]`: the first is at or before `start_utc - 96 h`, the last at or after `start_utc + 72 h`. |
 | `times[].valid_utc` | The instant the slice is valid for. |
 | `times[].cycle_utc`, `fhr` | The GFS cycle and forecast hour it came from (analysis f000/f003 for the past, the newest cycle's forecast after it). |
 | `times[].u`, `v` | Base64 (standard alphabet, padded) of 3,763 signed bytes, see below. |

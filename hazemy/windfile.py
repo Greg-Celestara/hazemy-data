@@ -1,6 +1,6 @@
 """v2/wind.json: 850 hPa wind for the app's slider, plus five days of fires (docs/schema-wind.md).
 
-Built from the same cached GFS slices as the v2 paths, reaching 96 h back and 48 h ahead of
+Built from the same cached GFS slices as the v2 paths, reaching 96 h back and 72 h ahead of
 "now". The app runs the back-trajectory itself from these fields, so `decode` returns exactly
 what `trajectory.back_trajectories` takes: it is the Python reference for the app's port.
 """
@@ -23,7 +23,7 @@ LEVEL_HPA = 850
 SCALE_MS = 0.5
 STEP_H = 3
 BACK_H = 96
-AHEAD_H = 48
+AHEAD_H = 72
 LAT_FIRST, LON_FIRST, STEP_DEG = -12.0, 90.0, 0.5
 NLAT, NLON = 53, 71
 FIELD_BYTES = NLAT * NLON
@@ -36,7 +36,7 @@ DECODED_GEOMETRY = {"ni": NLON, "nj": NLAT, "lat_first": LAT_FIRST, "lon_first":
 
 
 def slice_times(start: datetime) -> list:
-    """Every 3 h from the step at or before start - 96 h to the first at or after start + 48 h."""
+    """Every 3 h from the step at or before start - 96 h to the first at or after start + 72 h."""
     first = floor_hours(start - timedelta(hours=BACK_H), STEP_H)
     last = start + timedelta(hours=AHEAD_H)
     times = [first]
@@ -172,7 +172,7 @@ def _check_times(doc: dict) -> None:
     _need(all(b - a == STEP for a, b in zip(valid, valid[1:])),
           "times are not contiguous at 3 h")
     _need(valid[0] <= start - timedelta(hours=BACK_H), "times start after start - 96 h")
-    _need(valid[-1] >= start + timedelta(hours=AHEAD_H), "times end before start + 48 h")
+    _need(valid[-1] >= start + timedelta(hours=AHEAD_H), "times end before start + 72 h")
     for t, moment in zip(times, valid):
         for comp in ("u", "v"):
             try:
@@ -222,9 +222,9 @@ def decode(doc: dict) -> tuple:
     return fields, times
 
 
-# The app's transfer budget for this file (handoff acceptance 2). Going over it breaks nothing,
+# The app's transfer budget for this file (v1.8 acceptance 7). Going over it breaks nothing,
 # so it is a logged warning, not a failure: a peak fire season can push the fire days past it.
-GZIP_TARGET_BYTES = 250_000
+GZIP_TARGET_BYTES = 300_000
 
 
 def size_line(path: str, body: bytes) -> str:
