@@ -65,4 +65,5 @@ files are generated with eccodes.
 
 - Secrets `ADS_API_KEY` and `FIRMS_MAP_KEY` (Settings, Secrets and variables, Actions).
 - Settings, Pages, Source: "GitHub Actions".
-- `.github/workflows/hazemy.yml` runs hourly at :20 and on demand.
+- `.github/workflows/hazemy.yml` runs every 30 min (:15 and :45) and on demand
+  (cron-job.org calls workflow_dispatch, because GitHub's schedule is unreliable).
