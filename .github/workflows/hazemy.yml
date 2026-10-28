@@ -4,12 +4,15 @@
 # Secrets (repo Settings -> Secrets and variables -> Actions): ADS_API_KEY, FIRMS_MAP_KEY.
 # Pages must be set to "GitHub Actions" as its source (Settings -> Pages).
 #
-# Schedule: every hour at :20. The 00 UTC CAMS run is published about 10:00 UTC, so the 10:20 run
-# is the first to see it; until then the job expects (and finds in its cache) the previous day's
-# run. If CAMS is late, 10:20 fails and the later hourly runs retry. Each run refreshes the FIRMS
+# Schedule: every 30 min, at :15 and :45. The 00 UTC CAMS run is published about 10:00 UTC, so
+# the 10:15 run is the first that can see it; until then the job expects (and finds in its cache)
+# the previous day's run. If CAMS is late, that run fails and the later runs retry.
+# GitHub delays and drops scheduled runs under load (28 Oct 2026: about 5 of 24 :20 runs a day
+# arrived, 8-90 min late), so cron-job.org also calls workflow_dispatch as the dependable trigger.
+# :15/:45 keep clear of its :00 call; a run takes about 2 min. Each run refreshes the FIRMS
 # fires and the "now" window. The CAMS downloads are cached per run day with fixed lead spans, so
 # per run day the ADS is called once for the newest run and once for the previous run; the other
-# hours cost a few MB of FIRMS and GFS traffic.
+# runs cost a few MB of FIRMS and GFS traffic.
 #
 # A failed run never reaches the deploy job, so the last good file stays live.
 #
@@ -26,7 +29,7 @@ name: HazeMY data
 
 on:
   schedule:
-    - cron: '20 * * * *'
+    - cron: '15,45 * * * *'
   workflow_dispatch:
 
 permissions:
