@@ -90,6 +90,11 @@ jobs:
         run: >
           python -m hazemy --out site/v1/hazemy.json --out-v2 site/v2/hazemy.json
           --out-wind site/v2/wind.json --cache cache --gfs-cache cache-gfs
+      - name: Build flood-spots.json
+        # Never stops the main data files publishing.
+        continue-on-error: true
+        # Static list (data/flood_spots.json); no network. Fails the run if the list is invalid.
+        run: python -m hazemy.flood_spots --out site/v2/flood-spots.json
       - name: Newest GFS cycle in the cache
         id: cycle
         # The cycle the job actually used (and kept after pruning), read from the file names
