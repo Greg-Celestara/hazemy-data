@@ -1,0 +1,92 @@
+[
+ {
+  "id": "kl-jalan-rahmat-sultan-azlan-shah",
+  "name": "Jalan Rahmat / Jalan Sultan Azlan Shah",
+  "lat": 3.17077,
+  "lon": 101.69382,
+  "district": "Kuala Lumpur",
+  "source": "DBKL",
+  "source_date": "2026-05"
+ },
+ {
+  "id": "kl-lebuhraya-sultan-iskandar",
+  "name": "Lebuhraya Sultan Iskandar",
+  "lat": 3.16036,
+  "lon": 101.68448,
+  "district": "Kuala Lumpur",
+  "source": "DBKL",
+  "source_date": "2026-05"
+ },
+ {
+  "id": "kl-bulatan-dato-onn",
+  "name": "Bulatan Dato Onn",
+  "lat": 3.15091,
+  "lon": 101.69255,
+  "district": "Kuala Lumpur",
+  "source": "DBKL",
+  "source_date": "2026-05"
+ },
+ {
+  "id": "kl-jalan-tun-sambanthan",
+  "name": "Jalan Tun Sambanthan",
+  "lat": 3.132,
+  "lon": 101.68668,
+  "district": "Kuala Lumpur",
+  "source": "DBKL",
+  "source_date": "2026-05"
+ },
+ {
+  "id": "kl-jalan-chan-sow-lin",
+  "name": "Jalan Chan Sow Lin",
+  "lat": 3.12494,
+  "lon": 101.7142,
+  "district": "Kuala Lumpur",
+  "source": "DBKL",
+  "source_date": "2026-05"
+ },
+ {
+  "id": "kl-jalan-sultan",
+  "name": "Jalan Sultan",
+  "lat": 3.1445,
+  "lon": 101.69864,
+  "district": "Kuala Lumpur",
+  "source": "DBKL",
+  "source_date": "2026-05"
+ },
+ {
+  "id": "kl-jalan-cheras",
+  "name": "Jalan Cheras",
+  "lat": 3.10074,
+  "lon": 101.73584,
+  "district": "Kuala Lumpur",
+  "source": "DBKL",
+  "source_date": "2026-05"
+ },
+ {
+  "id": "kl-jalan-pudu",
+  "name": "Jalan Pudu",
+  "lat": 3.14034,
+  "lon": 101.70917,
+  "district": "Kuala Lumpur",
+  "source": "DBKL",
+  "source_date": "2026-05"
+ },
+ {
+  "id": "kl-jalan-genting-klang",
+  "name": "Jalan Genting Klang",
+  "lat": 3.20299,
+  "lon": 101.72127,
+  "district": "Kuala Lumpur",
+  "source": "DBKL",
+  "source_date": "2026-05"
+ },
+ {
+  "id": "kl-jalan-pintasan-segambut",
+  "name": "Jalan Pintasan Segambut",
+  "lat": 3.19806,
+  "lon": 101.65972,
+  "district": "Kuala Lumpur",
+  "source": "DBKL",
+  "source_date": "2026-05"
+ }
+]
