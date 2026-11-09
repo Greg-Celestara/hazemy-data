@@ -21,6 +21,14 @@ class PipelineError(Exception):
     """A failure that must stop the job before the published file is touched."""
 
 
+class HttpStatusError(PipelineError):
+    """A server answered with a status the caller did not accept (and retrying cannot help)."""
+
+    def __init__(self, message: str, status: int):
+        super().__init__(message)
+        self.status = status
+
+
 class RetriesExhausted(PipelineError):
     """A server stayed unreachable or kept failing (5xx/429) through every attempt."""
 
@@ -117,7 +125,7 @@ def http_get(url, *, label, budget, headers=None, ok=(200,), urlopen=urllib.requ
             budget.add(len(body))
             return body
         if status and status < 500 and status != 429:
-            raise PipelineError(f"{label}: HTTP {status}.")
+            raise HttpStatusError(f"{label}: HTTP {status}.", status)
         reason = reason if status == 0 else f"HTTP {status}"
         if attempt < attempts:
             log(f"{label}: attempt {attempt} failed ({reason}), retrying")

@@ -26,6 +26,17 @@ of fires, optional) is described in [docs/schema-wind.md](docs/schema-wind.md). 
    logs the error, copies the currently published v2 from GitHub Pages into `site/v2/` (no v2
    file if that fails too) and still exits 0 so v1 is deployed.
 
+5. **OpenAQ community PM2.5 sensors** (optional; needs the secret `OPENAQ_API_KEY`, sent as the
+   `X-API-Key` header and never logged). Malaysian outdoor sensors (AirGradient `O-` models) that
+   pass the freshness, range and not-stuck rules become the optional `sensors` block of v2 and
+   one row each in `site/internal/bias.csv`: the sensor's mean over a CAMS 3-hour step against
+   CAMS PM2.5 for the same step. CAMS PM2.5 is instantaneous at its valid time T, so the sensor
+   window is [T - 1.5 h, T + 1.5 h) for the most recent T whose window has ended; never a 24 h
+   mean. The file is seeded from the published Pages copy, then `cache/bias.csv`, de-duplicated on
+   (step, sensor), capped at 2 MB (oldest month dropped). Without the key, or if OpenAQ fails,
+   the step is skipped; v1 and v2 are unaffected and the job still exits 0. The OpenAQ endpoints
+   were written from its documentation and have not been seen answering.
+
 Cells: the 0.4 degree grid of the contract, kept only if the cell centre is within 50 km of
 Malaysian land. Towns come from `data/towns.json` (source noted inside the file).
 
@@ -35,7 +46,11 @@ Malaysian land. Towns come from `data/towns.json` (source noted inside the file)
 
 > Contains modified Copernicus Atmosphere Monitoring Service information 2026; NASA FIRMS; NOAA GFS
 
-Keep that text visible wherever the data is shown. Province outlines: geoBoundaries
+Keep that text visible wherever the data is shown. Sensor values (v2 `sensors`) must show:
+
+> Data provided by AirGradient via OpenAQ (Licensed under CC-BY 4.0)
+
+with the contributor name where one is published. Province outlines: geoBoundaries
 gbHumanitarian (CC BY 3.0 IGO).
 
 ## Run locally
@@ -46,6 +61,7 @@ Python 3.9 or newer. `eccodes` ships its own library as a wheel.
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 export ADS_API_KEY=...      # Copernicus ADS personal access token
 export FIRMS_MAP_KEY=...    # NASA FIRMS MAP_KEY
+export OPENAQ_API_KEY=...   # optional: OpenAQ v3 key; without it the sensors step is skipped
 .venv/bin/python -m hazemy  # writes site/v1/hazemy.json, caches downloads in cache/
 ```
 
