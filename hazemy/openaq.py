@@ -44,6 +44,7 @@ FAR_KM = 20.0
 MAX_CSV_BYTES = 2_000_000
 PUBLISHED_BIAS_URL = "https://greg-celestara.github.io/hazemy-data/internal/bias.csv"
 ATTRIBUTION = "Data provided by AirGradient via OpenAQ (Licensed under CC-BY 4.0)"
+POSITION_DECIMALS = 3
 COLUMNS = ["step_utc", "sensor_id", "provider", "contributor", "lat", "lon", "sensor_mean",
            "cams_pm25", "cell_i", "cell_j", "distance_km", "flags", "n_readings"]
 MODEL_TOKEN = re.compile(r"^[OI]-\S+")
@@ -99,6 +100,9 @@ def _candidate(location: dict):
     inside = LAT_RANGE[0] <= lat <= LAT_RANGE[1] and LON_RANGE[0] <= lon <= LON_RANGE[1]
     if sensor_id is None or not inside or not is_outdoor(location):
         return None
+    # Published positions are rounded to about 100 m (Greg, 9 Nov 2026): the sensors sit at
+    # private homes, and 100 m is far below the 0.4 degree cell and the 15 km app radius.
+    lat, lon = round(lat, POSITION_DECIMALS), round(lon, POSITION_DECIMALS)
     return {"sensor_id": sensor_id, "name": location.get("name"), "lat": lat, "lon": lon,
             "provider": (location.get("provider") or {}).get("name"),
             "contributor": (location.get("owner") or {}).get("name")}
@@ -219,7 +223,7 @@ def bias_rows(used: list, cells: list, series: dict, now: datetime) -> list:
         if mean is None or math.isnan(cams):
             continue
         rows.append([fmt(step), str(s["sensor_id"]), s["provider"] or "", s["contributor"] or "",
-                     f"{s['lat']:.5f}", f"{s['lon']:.5f}", f"{mean:.1f}", f"{cams:.1f}",
+                     f"{s['lat']:.3f}", f"{s['lon']:.3f}", f"{mean:.1f}", f"{cams:.1f}",
                      str(cells[k][0]), str(cells[k][1]), f"{km:.1f}",
                      "far" if km > FAR_KM else "", str(count)])
     return rows

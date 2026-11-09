@@ -6,6 +6,7 @@ import csv
 import io
 import json
 import os
+import re
 import tempfile
 import unittest
 import urllib.error
@@ -383,6 +384,18 @@ class JobSensors(unittest.TestCase):
         self.assertEqual((rows[0]["step_utc"], rows[0]["sensor_mean"], rows[0]["cams_pm25"],
                           rows[0]["flags"]), ("2026-10-19T09:00:00Z", "12.0", "20.0", ""))
         self.assertTrue(os.path.exists(os.path.join(self.root, "cache", "bias.csv")))
+
+    def test_published_positions_have_at_most_three_decimals(self):
+        precise = [location(1, lat=3.1394567, lon=101.6873219)]
+        self.assertEqual(self.run_it(FakeOpenAQ(precise, {1: GOOD})), 0)
+        sensor = self.load("v2")["sensors"]["sensors"][0]
+        self.assertEqual((sensor["lat"], sensor["lon"]), (3.139, 101.687))
+        row = self.bias_rows()[0]
+        self.assertEqual((row["lat"], row["lon"]), ("3.139", "101.687"))
+        with open(self.paths["bias"]) as fh:
+            self.assertIsNone(re.search(r"\d\.\d{4,}", fh.read()))
+        with open(self.paths["v2"]) as fh:
+            self.assertNotIn("3.1394", fh.read())
 
     def test_v1_is_byte_identical_with_and_without_openaq(self):
         self.run_it(FakeOpenAQ(), env={k: v for k, v in ENV.items() if k != "OPENAQ_API_KEY"})
