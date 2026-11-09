@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 
 import numpy as np
 
-from hazemy import openaq
+from hazemy import openaq, output_v2
 from hazemy.common import Budget
 from hazemy.job import run_job
 from tests.test_data_sources import HEADER
@@ -84,6 +84,8 @@ class FakeOpenAQ:
         sensor_id = int(url.split("/sensors/")[1].split("/")[0])
         results = [{"value": v, "period": {"datetimeTo": {"utc": t.strftime("%Y-%m-%dT%H:%M:%SZ")}}}
                    for t, v in self.readings.get(sensor_id, [])]
+        page = int(url.split("page=")[1].split("&")[0])
+        results = results[(page - 1) * openaq.PAGE_LIMIT:page * openaq.PAGE_LIMIT]
         return FakeResponse(json.dumps({"results": results}))
 
     def published_copy(self, url):
@@ -149,6 +151,27 @@ class Collect(unittest.TestCase):
         self.assertTrue(any("capped at 40 of 45" in line for line in lines))
         self.assertEqual(sum("/sensors/" in u for u in net.urls), openaq.MAX_SENSORS)
 
+    def test_readings_are_paged_until_a_short_page(self):
+        many = [(at(5, 0) + timedelta(minutes=10 * n), 5.0 + n) for n in range(5)]
+        net = FakeOpenAQ([location(1)], {1: many})
+        old = openaq.PAGE_LIMIT
+        openaq.PAGE_LIMIT = 2
+        self.addCleanup(setattr, openaq, "PAGE_LIMIT", old)
+        got = openaq.fetch_readings(KEY, 1, NOW, Budget(), print, http_of(net))
+        self.assertEqual(got, many)
+        self.assertEqual(sum("/sensors/" in u for u in net.urls), 3)
+
+    def test_paging_stops_at_five_pages_and_says_so(self):
+        many = [(at(0, 0) + timedelta(minutes=n), 5.0 + n) for n in range(20)]
+        net = FakeOpenAQ([location(1)], {1: many})
+        old = openaq.PAGE_LIMIT
+        openaq.PAGE_LIMIT = 2
+        self.addCleanup(setattr, openaq, "PAGE_LIMIT", old)
+        lines = []
+        got = openaq.fetch_readings(KEY, 1, NOW, Budget(), lines.append, http_of(net))
+        self.assertEqual(len(got), 10)
+        self.assertTrue(any("stopped at 5 pages" in line for line in lines))
+
     def test_edge_values_of_the_filters(self):
         fresh = series_of(((8, 0), 1.0), ((9, 0), 0.5))
         self.assertTrue(openaq.passes_filters(fresh, NOW))
@@ -177,22 +200,22 @@ class Pairing(unittest.TestCase):
     def test_row_uses_the_cell_value_of_the_step_and_the_step_window_mean(self):
         rows = openaq.bias_rows([self.sensor(1.05, 100.35)], self.CELLS, self.series(), NOW)
         self.assertEqual(len(rows), 1)
-        step, sid, prov, contrib, _, _, mean, cams, i, j, km, flags = rows[0]
+        step, sid, prov, contrib, _, _, mean, cams, i, j, km, flags, n = rows[0]
         self.assertEqual((step, sid, prov, contrib), ("2026-10-19T09:00:00Z", "9", "AirGradient",
                                                       "Owner"))
-        self.assertEqual((mean, cams, i, j, flags), ("12.0", "20.0", "0", "1", ""))
+        self.assertEqual((mean, cams, i, j, flags, n), ("12.0", "20.0", "0", "1", "", "3"))
         self.assertLess(float(km), 20)
 
     def test_sensor_beyond_20_km_is_kept_and_flagged(self):
         rows = openaq.bias_rows([self.sensor(1.0, 100.8)], self.CELLS, self.series(), NOW)
         self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0][-1], "far")
+        self.assertEqual(rows[0][11], "far")
         self.assertGreater(float(rows[0][10]), 20)
 
     def test_window_is_half_open_and_ignores_readings_outside_it(self):
         readings = series_of(((7, 29), 500.0), ((7, 30), 4.0), ((10, 29), 8.0), ((10, 30), 900.0))
-        self.assertEqual(openaq.step_mean(readings, STEP), 6.0)
-        self.assertIsNone(openaq.step_mean(series_of(((6, 0), 5.0)), STEP))
+        self.assertEqual(openaq.step_mean(readings, STEP), (6.0, 2))
+        self.assertEqual(openaq.step_mean(series_of(((6, 0), 5.0)), STEP), (None, 0))
 
     def test_latest_step_is_the_newest_whose_window_has_ended(self):
         series = {at(h): None for h in (3, 6, 9, 12)}
@@ -210,17 +233,17 @@ class Pairing(unittest.TestCase):
 
 def row_for(step, sensor_id="1", mean="5.0"):
     return [step, sensor_id, "AirGradient", "Owner", "3.1", "101.6", mean, "20.0", "6", "5",
-            "4.0", ""]
+            "4.0", "", "3"]
 
 
 class Csv(unittest.TestCase):
-    def test_merge_dedupes_on_step_and_sensor_and_keeps_the_earlier_row(self):
+    def test_merge_dedupes_on_step_and_sensor_and_the_later_row_wins(self):
         old = [row_for("2026-10-19T09:00:00Z", "1", "5.0")]
         new = [row_for("2026-10-19T09:00:00Z", "1", "9.0"),
                row_for("2026-10-19T09:00:00Z", "2"), row_for("2026-10-19T12:00:00Z", "1")]
         merged = openaq.merge_rows(old, new)
         self.assertEqual(len(merged), 3)
-        self.assertEqual(merged[0][6], "5.0")
+        self.assertEqual(merged[0][6], "9.0")
 
     def test_cap_drops_the_oldest_month_first(self):
         rows = [row_for(f"2026-{m:02d}-15T09:00:00Z", str(n)) for m in (8, 9, 10)
@@ -274,6 +297,22 @@ class Seed(unittest.TestCase):
         self.store(self.csv_with("1"), cache_text=self.csv_with("2"))
         self.assertEqual(self.ids(self.out), ["1", "7"])
         self.assertEqual(self.ids(os.path.join(self.cache, "bias.csv")), ["1", "7"])
+
+    def test_the_cache_wins_when_its_last_step_is_newer(self):
+        newer = openaq.render_csv([row_for("2026-10-18T12:00:00Z", "2")])
+        self.store(self.csv_with("1"), cache_text=newer)
+        self.assertEqual(self.ids(self.out), ["2", "7"])
+
+    def test_published_wins_a_tie(self):
+        same = openaq.render_csv([row_for("2026-10-18T09:00:00Z", "2")])
+        self.store(self.csv_with("1"), cache_text=same)
+        self.assertEqual(self.ids(self.out), ["1", "7"])
+
+    def test_empty_new_rows_still_publish_the_history_unchanged(self):
+        self.new = []
+        self.store(self.csv_with("1"))
+        with open(self.out) as fh:
+            self.assertEqual(fh.read(), self.csv_with("1"))
 
     def test_cache_is_used_when_the_published_copy_is_down(self):
         self.store("down", cache_text=self.csv_with("2"))
@@ -356,13 +395,21 @@ class JobSensors(unittest.TestCase):
         self.assertNotIn("sensors", self.load("v1"))
         self.assertIn("sensors", self.load("v2"))
 
+    HISTORY = openaq.render_csv([row_for("2026-10-18T09:00:00Z", "3")])
+
+    def assert_bias_unchanged(self):
+        with open(self.paths["bias"]) as fh:
+            self.assertEqual(fh.read(), self.HISTORY)
+        with open(os.path.join(self.root, "cache", "bias.csv")) as fh:
+            self.assertEqual(fh.read(), self.HISTORY)
+
     def assert_failure_leaves_v1_and_v2(self, fail):
-        self.assertEqual(self.run_it(self.good_net(fail=fail)), 0)
+        self.assertEqual(self.run_it(self.good_net(fail=fail, published=self.HISTORY)), 0)
         self.assertEqual(self.load("v1")["version"], 1)
         v2 = self.load("v2")
         self.assertEqual(v2["version"], 2)
         self.assertNotIn("sensors", v2)
-        self.assertFalse(os.path.exists(self.paths["bias"]))
+        self.assert_bias_unchanged()
         self.assertTrue(any("OpenAQ failed" in line for line in self.lines))
 
     def test_openaq_500_leaves_v1_and_v2(self):
@@ -385,13 +432,34 @@ class JobSensors(unittest.TestCase):
         self.assertNotIn("sensors", self.load("v2"))
 
     def test_no_api_key_skips_openaq_with_one_log_line(self):
-        net = self.good_net()
+        net = self.good_net(published=self.HISTORY)
         env = {k: v for k, v in ENV.items() if k != "OPENAQ_API_KEY"}
         self.assertEqual(self.run_it(net, env=env), 0)
         self.assertFalse(any("openaq" in u for u in net.urls))
         self.assertEqual(sum("OPENAQ_API_KEY is not set" in line for line in self.lines), 1)
         self.assertNotIn("sensors", self.load("v2"))
-        self.assertFalse(os.path.exists(self.paths["bias"]))
+        self.assert_bias_unchanged()
+
+    def test_an_invalid_sensors_block_drops_only_the_block(self):
+        old = output_v2.SENSOR_KEYS
+        output_v2.SENSOR_KEYS = ["lat"]
+        self.addCleanup(setattr, output_v2, "SENSOR_KEYS", old)
+        self.assertEqual(self.run_it(self.good_net()), 0)
+        v2 = self.load("v2")
+        self.assertEqual(v2["version"], 2)
+        self.assertIn("cells", v2)
+        self.assertNotIn("sensors", v2)
+        self.assertFalse(any("v2 failed" in line for line in self.lines))
+
+    def test_v2_failure_still_publishes_the_bias_history(self):
+        def broken(*a, **k):
+            raise openaq.PipelineError("GFS down")
+        run_job(ENV, out=self.paths["v1"], out_v2=self.paths["v2"], out_bias=self.paths["bias"],
+                cache_dir=os.path.join(self.root, "cache"), gfs_cache_dir=os.path.join(
+                    self.root, "gfs"), now_fn=lambda: NOW, log=self.lines.append,
+                retrieve=fake_retrieve, fetch_wind=fake_wind, fetch_bundle=broken,
+                http=http_of(self.good_net(published=self.HISTORY)))
+        self.assert_bias_unchanged()
 
     def test_no_qualifying_sensor_omits_the_block_and_adds_no_rows(self):
         net = FakeOpenAQ([location(2, model="I-9PSL-DE")], {2: GOOD})

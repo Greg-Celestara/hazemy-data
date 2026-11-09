@@ -1,7 +1,8 @@
-# Builds site/v1/hazemy.json, site/v2/hazemy.json and the optional site/v2/wind.json, and
-# publishes them with GitHub Pages.
+# Builds site/v1/hazemy.json, site/v2/hazemy.json, the optional site/v2/wind.json and
+# site/internal/bias.csv (OpenAQ sensors vs CAMS), and publishes them with GitHub Pages.
 #
-# Secrets (repo Settings -> Secrets and variables -> Actions): ADS_API_KEY, FIRMS_MAP_KEY.
+# Secrets (repo Settings -> Secrets and variables -> Actions): ADS_API_KEY, FIRMS_MAP_KEY,
+# OPENAQ_API_KEY (optional: without it the sensors step is skipped).
 # Pages must be set to "GitHub Actions" as its source (Settings -> Pages).
 #
 # Schedule: every 30 min, at :15 and :45. The 00 UTC CAMS run is published about 10:00 UTC, so

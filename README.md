@@ -32,8 +32,12 @@ of fires, optional) is described in [docs/schema-wind.md](docs/schema-wind.md). 
    one row each in `site/internal/bias.csv`: the sensor's mean over a CAMS 3-hour step against
    CAMS PM2.5 for the same step. CAMS PM2.5 is instantaneous at its valid time T, so the sensor
    window is [T - 1.5 h, T + 1.5 h) for the most recent T whose window has ended; never a 24 h
-   mean. The file is seeded from the published Pages copy, then `cache/bias.csv`, de-duplicated on
-   (step, sensor), capped at 2 MB (oldest month dropped). Without the key, or if OpenAQ fails,
+   mean. Columns: step_utc, sensor_id, provider, contributor, lat, lon, sensor_mean, cams_pm25, cell_i,
+   cell_j, distance_km, flags, n_readings (readings in the window). The history is the published
+   Pages copy or `cache/bias.csv`, whichever has the newer last step (published on a tie); the
+   file is rewritten on every run, even when OpenAQ is skipped, so Pages keeps it. A new file
+   starts only when the published copy answers 404 and there is no cache. De-duplicated on
+   (step, sensor), the later row winning, capped at 2 MB (oldest month dropped). Without the key, or if OpenAQ fails,
    the step is skipped; v1 and v2 are unaffected and the job still exits 0. The OpenAQ endpoints
    were written from its documentation and have not been seen answering.
 

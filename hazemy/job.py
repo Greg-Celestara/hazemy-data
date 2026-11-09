@@ -96,7 +96,8 @@ def run_job(env, *, out=DEFAULT_OUT, out_v2=None, out_wind=None, cache_dir=DEFAU
         ctx = {"env": env, "now_fn": now_fn, "cache_dir": cache_dir, "gfs_cache": gfs_cache_dir,
                "log": safe_log, "retrieve": retrieve, "fetch_wind": wind_once,
                "fetch_bundle": fetch_bundle, "http": http or {},
-               "fetch_wx": fetch_wx or _nomads_fetcher(http or {}), "out_bias": out_bias}
+               "fetch_wx": fetch_wx or _nomads_fetcher(http or {}), "out_bias": out_bias,
+               "bias_rows": []}
         budget = Budget()
         body, shared = _build_v1(ctx, budget)
         output.write_atomic(out, body)
@@ -108,6 +109,8 @@ def run_job(env, *, out=DEFAULT_OUT, out_v2=None, out_wind=None, cache_dir=DEFAU
         _publish_v2(ctx, budget, shared, out_v2)
     if out_wind is not None:
         _publish_wind(ctx, budget, shared, out_wind)
+    if out_bias is not None:
+        _publish_bias(ctx, budget)
     return 0
 
 
@@ -254,24 +257,30 @@ def _build_v2(ctx, budget, shared) -> bytes:
 
 
 def _sensors(ctx, budget, now, cells, series):
-    """The v2 `sensors` block, or None. Also logs the CAMS pairs to bias.csv. Never raises."""
+    """The v2 `sensors` block, or None. Leaves this run's bias rows in ctx. Never raises."""
     log, key = ctx["log"], ctx["env"].get("OPENAQ_API_KEY")
     if not key:
         log("OPENAQ_API_KEY is not set: skipping OpenAQ (no sensors block, no bias rows)")
         return None
     try:
         used = openaq.collect_used(key, now, budget, log, ctx["http"])
-        rows = openaq.bias_rows(used, cells, series, now)
+        ctx["bias_rows"] = openaq.bias_rows(used, cells, series, now)
         block = openaq.sensors_block(used)
+        if block is not None:
+            output_v2._check_sensors(block)
     except Exception as err:  # noqa: BLE001 - OpenAQ is optional and must never stop v1 or v2
         log(f"WARNING: OpenAQ failed, publishing without sensors. {type(err).__name__}: {err}")
         return None
-    if ctx["out_bias"]:
-        try:
-            openaq.store_bias(rows, ctx["out_bias"], ctx["cache_dir"], budget, log, ctx["http"])
-        except Exception as err:  # noqa: BLE001 - the bias log is an extra, never fatal
-            log(f"ERROR: bias.csv not written. {type(err).__name__}: {err}")
     return block
+
+
+def _publish_bias(ctx, budget) -> None:
+    """Write bias.csv on every run (history plus this run's rows, if any) so Pages keeps it."""
+    try:
+        openaq.store_bias(ctx["bias_rows"], ctx["out_bias"], ctx["cache_dir"], budget,
+                          ctx["log"], ctx["http"])
+    except Exception as err:  # noqa: BLE001 - the bias log is an extra, never fatal
+        ctx["log"](f"ERROR: bias.csv not written. {type(err).__name__}: {err}")
 
 
 def _met(ctx, budget, now, towns: list) -> dict:

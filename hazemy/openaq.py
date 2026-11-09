@@ -34,6 +34,8 @@ PM25_PARAMETER_ID = 2
 MAX_SENSORS = 40  # keeps a run near 41 calls, under OpenAQ's 60 per minute
 CALL_GAP_S = 1.0
 FETCH_HOURS = 6
+PAGE_LIMIT = 100
+MAX_PAGES = 5
 MAX_AGE = timedelta(hours=2)
 VALUE_RANGE = (0.5, 1000.0)
 LAST_READINGS = 6
@@ -43,7 +45,7 @@ MAX_CSV_BYTES = 2_000_000
 PUBLISHED_BIAS_URL = "https://greg-celestara.github.io/hazemy-data/internal/bias.csv"
 ATTRIBUTION = "Data provided by AirGradient via OpenAQ (Licensed under CC-BY 4.0)"
 COLUMNS = ["step_utc", "sensor_id", "provider", "contributor", "lat", "lon", "sensor_mean",
-           "cams_pm25", "cell_i", "cell_j", "distance_km", "flags"]
+           "cams_pm25", "cell_i", "cell_j", "distance_km", "flags", "n_readings"]
 MODEL_TOKEN = re.compile(r"^[OI]-\S+")
 EARTH_KM = 6371.0
 
@@ -116,18 +118,27 @@ def fetch_candidates(key: str, budget, log, http: dict) -> list:
 
 
 def fetch_readings(key: str, sensor_id, now: datetime, budget, log, http: dict) -> list:
-    """[(time, value)] oldest first for the last FETCH_HOURS."""
+    """[(time, value)] oldest first for the last FETCH_HOURS, paging until a short page."""
     start = now - timedelta(hours=FETCH_HOURS)
-    url = (f"{API}/sensors/{sensor_id}/measurements?datetime_from={fmt(start)}"
-           f"&datetime_to={fmt(now)}&limit=100")
-    doc = _get_json(url, key, f"OpenAQ sensor {sensor_id}", budget, log, http)
     out = []
-    for item in doc["results"]:
-        value = item["value"]
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise PipelineError(f"OpenAQ sensor {sensor_id}: reading {value!r} is not a number.")
-        out.append((_utc(item["period"]["datetimeTo"]["utc"]), float(value)))
+    for page in range(1, MAX_PAGES + 1):
+        url = (f"{API}/sensors/{sensor_id}/measurements?datetime_from={fmt(start)}"
+               f"&datetime_to={fmt(now)}&limit={PAGE_LIMIT}&page={page}")
+        results = _get_json(url, key, f"OpenAQ sensor {sensor_id}", budget, log,
+                            http)["results"]
+        out.extend(_parse_reading(item, sensor_id) for item in results)
+        if len(results) < PAGE_LIMIT:
+            break
+    else:
+        log(f"OpenAQ sensor {sensor_id}: stopped at {MAX_PAGES} pages of readings")
     return sorted(out)
+
+
+def _parse_reading(item: dict, sensor_id) -> tuple:
+    value = item["value"]
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise PipelineError(f"OpenAQ sensor {sensor_id}: reading {value!r} is not a number.")
+    return _utc(item["period"]["datetimeTo"]["utc"]), float(value)
 
 
 def passes_filters(readings: list, now: datetime) -> bool:
@@ -174,11 +185,11 @@ def latest_step(now: datetime, series: dict):
     return max(ready) if ready else None
 
 
-def step_mean(readings: list, step: datetime):
-    """Mean of the in-range readings in [step - 1.5 h, step + 1.5 h), or None if there are none."""
+def step_mean(readings: list, step: datetime) -> tuple:
+    """(mean, count) of the in-range readings in [step - 1.5 h, step + 1.5 h); (None, 0) if none."""
     values = [v for t, v in readings
               if step - HALF_STEP <= t < step + HALF_STEP and VALUE_RANGE[0] <= v <= VALUE_RANGE[1]]
-    return sum(values) / len(values) if values else None
+    return (sum(values) / len(values), len(values)) if values else (None, 0)
 
 
 def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -202,7 +213,7 @@ def bias_rows(used: list, cells: list, series: dict, now: datetime) -> list:
         return []
     rows = []
     for s in used:
-        mean = step_mean(s["readings"], step)
+        mean, count = step_mean(s["readings"], step)
         k, km = nearest_cell(s["lat"], s["lon"], cells)
         cams = float(series[step][k])
         if mean is None or math.isnan(cams):
@@ -210,7 +221,7 @@ def bias_rows(used: list, cells: list, series: dict, now: datetime) -> list:
         rows.append([fmt(step), str(s["sensor_id"]), s["provider"] or "", s["contributor"] or "",
                      f"{s['lat']:.5f}", f"{s['lon']:.5f}", f"{mean:.1f}", f"{cams:.1f}",
                      str(cells[k][0]), str(cells[k][1]), f"{km:.1f}",
-                     "far" if km > FAR_KM else ""])
+                     "far" if km > FAR_KM else "", str(count)])
     return rows
 
 
@@ -233,14 +244,14 @@ def render_csv(rows: list) -> str:
 
 
 def merge_rows(old: list, new: list) -> list:
-    """`old` then `new`, one row per (step_utc, sensor_id); the earlier row wins."""
-    seen, merged = set(), []
+    """`old` then `new`, one row per (step_utc, sensor_id); the later row replaces the earlier.
+
+    A later run may have ingested more readings for the same step, so it wins.
+    """
+    merged = {}
     for row in old + new:
-        ident = (row[0], row[1])
-        if ident not in seen:
-            seen.add(ident)
-            merged.append(row)
-    return merged
+        merged[(row[0], row[1])] = row
+    return list(merged.values())
 
 
 def cap_csv(rows: list, limit: int = MAX_CSV_BYTES) -> str:
@@ -251,29 +262,44 @@ def cap_csv(rows: list, limit: int = MAX_CSV_BYTES) -> str:
     return render_csv(rows)
 
 
-def load_history(cache_path: str, budget, log, http: dict):
-    """Existing rows, or None when no safe starting point exists.
-
-    Order: the published copy, then the cache copy, then a new file only if the published copy
-    answered HTTP 404. Any other failure returns None so that a network blip can never replace
-    the history with an empty file.
-    """
-    not_found = False
+def _published_rows(budget, log, http: dict) -> tuple:
+    """(rows or None, whether the server answered 404)."""
     try:
         body = http_get(PUBLISHED_BIAS_URL, label="published bias.csv", budget=budget, log=log,
                         **http)
-        return parse_csv(body.decode("utf-8"))
+        return parse_csv(body.decode("utf-8")), False
     except HttpStatusError as err:
-        not_found = err.status == 404
         log(f"WARNING: published bias.csv unavailable: {err}")
+        return None, err.status == 404
     except (PipelineError, UnicodeDecodeError) as err:
         log(f"WARNING: published bias.csv unusable: {err}")
-    if os.path.exists(cache_path):
-        try:
-            with open(cache_path, encoding="utf-8") as fh:
-                return parse_csv(fh.read())
-        except (OSError, PipelineError) as err:
-            log(f"WARNING: cached bias.csv unusable: {err}")
+        return None, False
+
+
+def _cached_rows(cache_path: str, log):
+    if not os.path.exists(cache_path):
+        return None
+    try:
+        with open(cache_path, encoding="utf-8") as fh:
+            return parse_csv(fh.read())
+    except (OSError, PipelineError) as err:
+        log(f"WARNING: cached bias.csv unusable: {err}")
+        return None
+
+
+def load_history(cache_path: str, budget, log, http: dict):
+    """Existing rows, or None when no safe starting point exists.
+
+    Both the published copy and the cache copy are read; the one with the newer last step_utc
+    wins, the published copy on a tie. A new file starts only if the published copy answered
+    HTTP 404 and there is no cache. Any other failure returns None so that a network blip can
+    never replace the history with an empty file.
+    """
+    published, not_found = _published_rows(budget, log, http)
+    cached = _cached_rows(cache_path, log)
+    found = [r for r in (published, cached) if r is not None]
+    if found:
+        return max(found, key=lambda rows: max((r[0] for r in rows), default=""))
     if not_found:
         log("bias.csv not published yet (HTTP 404) and no cache: starting a new file")
         return []
