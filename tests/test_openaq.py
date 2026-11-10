@@ -33,7 +33,8 @@ def at(hour, minute=0):
 
 
 def location(sensor_id, model="O-1PST", lat=KL[0], lon=KL[1], name="Unit"):
-    instruments = [{"name": f"AirGradient {model}"}] if model else []
+    # The instrument name format seen on the live API, 10 Nov 2026.
+    instruments = [{"name": f"AirGradient Open Air Generation 1 ({model})"}] if model else []
     return {"id": sensor_id + 1000, "name": name, "coordinates": {"latitude": lat,
                                                                   "longitude": lon},
             "provider": {"name": "AirGradient"}, "owner": {"name": "Owner"},
@@ -118,6 +119,48 @@ class ModelCode(unittest.TestCase):
     def test_only_outdoor_models_qualify(self):
         self.assertTrue(openaq.is_outdoor({"instruments": [{"name": "O-1PST"}]}))
         self.assertFalse(openaq.is_outdoor({"instruments": [{"name": "I-9PSL-DE"}]}))
+
+
+class LiveInstrumentNames(unittest.TestCase):
+    """Instrument names exactly as the live /v3/locations answer gave them on 10 Nov 2026."""
+
+    def model(self, name):
+        return openaq.airgradient_model({"name": "Unit", "instruments": [{"name": name}]})
+
+    def test_bracketed_outdoor_codes_are_found(self):
+        self.assertEqual(self.model("AirGradient Open Air Generation 1 (O-1PST)"), "O-1PST")
+        self.assertEqual(self.model("AirGradient Open Air (O-1P)"), "O-1P")
+        self.assertEqual(self.model("AirGradient Open Air Max Generation 1 (O-M-1PPST-CE)"),
+                         "O-M-1PPST-CE")
+
+    def test_bracketed_indoor_code_is_found_and_excluded(self):
+        name = "AirGradient ONE Generation 9 (I-9PSL-DE)"
+        self.assertEqual(self.model(name), "I-9PSL-DE")
+        self.assertFalse(openaq.is_outdoor({"instruments": [{"name": name}]}))
+
+    def test_names_without_a_code_are_excluded(self):
+        for name in ("Unknown AirGradient Sensor", "Government Monitor", "HabitatMap Sensor",
+                     "Clarity Sensor"):
+            self.assertIsNone(self.model(name), name)
+
+
+class RecentOnly(unittest.TestCase):
+    def test_stale_locations_are_dropped_before_the_cap(self):
+        stale = [dict(location(i), datetimeLast={"utc": "2026-10-19T08:00:00Z"})
+                 for i in range(1, 11)]
+        fresh = [location(i) for i in range(11, 51)]
+        lines = []
+        net = FakeOpenAQ(stale + fresh)
+        got = openaq.fetch_candidates(KEY, NOW, Budget(), lines.append, http_of(net))
+        self.assertEqual([c["sensor_id"] for c in got], list(range(11, 51)))
+        self.assertTrue(any("50 outdoor PM2.5 sensors, 40 reported" in line for line in lines))
+
+    def test_missing_or_unreadable_last_time_is_kept(self):
+        loc = location(1)
+        del loc["datetimeLast"]
+        bad = dict(location(2), datetimeLast={"utc": "not a time"})
+        got = openaq.fetch_candidates(KEY, NOW, Budget(), print, http_of(FakeOpenAQ([loc, bad])))
+        self.assertEqual([c["sensor_id"] for c in got], [1, 2])
 
 
 class Collect(unittest.TestCase):
