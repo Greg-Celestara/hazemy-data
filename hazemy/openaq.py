@@ -48,19 +48,18 @@ ATTRIBUTION = "Data provided by AirGradient via OpenAQ (Licensed under CC-BY 4.0
 POSITION_DECIMALS = 3
 COLUMNS = ["step_utc", "sensor_id", "provider", "contributor", "lat", "lon", "sensor_mean",
            "cams_pm25", "cell_i", "cell_j", "distance_km", "flags", "n_readings"]
-MODEL_TOKEN = re.compile(r"\b([OI]-[A-Z0-9][A-Z0-9-]*)")
+MODEL_TOKEN = re.compile(r"\(([OI]-[A-Z0-9][A-Z0-9-]*)\)")
 EARTH_KM = 6371.0
 
 
 def airgradient_model(location: dict):
-    """First `O-...` or `I-...` model code in the instrument names, else the location name.
+    """First `O-...` or `I-...` model code in brackets in the instrument names, else None.
 
-    OpenAQ puts it in brackets in the instrument name, e.g. "... Generation 1 (O-1PST)".
+    OpenAQ puts it there, e.g. "... Generation 1 (O-1PST)"; the live answer of 10 Nov 2026 had no
+    code anywhere else. Location names are not read: owners type them ("I-City", "Lot O-12").
     None when there is no code, as for "Unknown AirGradient Sensor".
     """
-    texts = [i.get("name") for i in location.get("instruments") or []]
-    texts.append(location.get("name"))
-    for text in texts:
+    for text in (i.get("name") for i in location.get("instruments") or []):
         match = MODEL_TOKEN.search(text or "")
         if match:
             return match.group(1)
@@ -116,7 +115,7 @@ def _reported_recently(location: dict, now: datetime) -> bool:
         return True
     try:
         return now - _utc(last) <= MAX_AGE
-    except ValueError:
+    except (ValueError, TypeError, AttributeError):
         return True
 
 
@@ -132,7 +131,7 @@ def fetch_candidates(key: str, now: datetime, budget, log, http: dict) -> list:
     found = [c for c, loc in outdoor if _reported_recently(loc, now)]
     found.sort(key=lambda c: c["sensor_id"])
     log(f"OpenAQ: {len(doc['results'])} locations, {len(outdoor)} outdoor PM2.5 sensors, "
-        f"{len(found)} reported in the last {MAX_AGE.seconds // 3600} h")
+        f"{len(found)} reported in the last {int(MAX_AGE.total_seconds() // 3600)} h")
     if len(found) > MAX_SENSORS:
         log(f"OpenAQ: capped at {MAX_SENSORS} of {len(found)} sensors")
         found = found[:MAX_SENSORS]

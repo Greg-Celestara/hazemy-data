@@ -103,13 +103,18 @@ def http_of(net):
 
 
 class ModelCode(unittest.TestCase):
-    def test_instrument_name_is_checked_before_the_location_name(self):
-        loc = {"name": "Mont Kiara I-9PSL-DE", "instruments": [{"name": "AirGradient O-1PST"}]}
+    def test_first_instrument_with_a_code_wins(self):
+        loc = {"name": "Unit", "instruments": [{"name": "Unknown AirGradient Sensor"},
+                                               {"name": "AirGradient Open Air (O-1PST)"}]}
         self.assertEqual(openaq.airgradient_model(loc), "O-1PST")
 
-    def test_location_name_is_the_fallback(self):
-        self.assertEqual(openaq.airgradient_model({"name": "KL O-1PP", "instruments": []}),
-                         "O-1PP")
+    def test_codes_typed_into_the_location_name_are_ignored(self):
+        for name in ("KL O-1PP", "Lot O-12 Kepong", "I-City Shah Alam", "Unit (O-1PST)"):
+            loc = {"name": name, "instruments": [{"name": "Unknown AirGradient Sensor"}]}
+            self.assertIsNone(openaq.airgradient_model(loc), name)
+
+    def test_unbracketed_code_in_an_instrument_name_is_not_a_model(self):
+        self.assertIsNone(openaq.airgradient_model({"instruments": [{"name": "Lot O-12"}]}))
 
     def test_no_model_anywhere_is_none_and_excluded(self):
         loc = {"name": "Somewhere", "instruments": [{"name": "AirGradient"}]}
@@ -117,8 +122,8 @@ class ModelCode(unittest.TestCase):
         self.assertFalse(openaq.is_outdoor(loc))
 
     def test_only_outdoor_models_qualify(self):
-        self.assertTrue(openaq.is_outdoor({"instruments": [{"name": "O-1PST"}]}))
-        self.assertFalse(openaq.is_outdoor({"instruments": [{"name": "I-9PSL-DE"}]}))
+        self.assertTrue(openaq.is_outdoor({"instruments": [{"name": "Open Air (O-1PST)"}]}))
+        self.assertFalse(openaq.is_outdoor({"instruments": [{"name": "ONE (I-9PSL-DE)"}]}))
 
 
 class LiveInstrumentNames(unittest.TestCase):
@@ -159,8 +164,10 @@ class RecentOnly(unittest.TestCase):
         loc = location(1)
         del loc["datetimeLast"]
         bad = dict(location(2), datetimeLast={"utc": "not a time"})
-        got = openaq.fetch_candidates(KEY, NOW, Budget(), print, http_of(FakeOpenAQ([loc, bad])))
-        self.assertEqual([c["sensor_id"] for c in got], [1, 2])
+        odd = dict(location(3), datetimeLast={"utc": 1731200000})
+        net = FakeOpenAQ([loc, bad, odd])
+        got = openaq.fetch_candidates(KEY, NOW, Budget(), print, http_of(net))
+        self.assertEqual([c["sensor_id"] for c in got], [1, 2, 3])
 
 
 class Collect(unittest.TestCase):
