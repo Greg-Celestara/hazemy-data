@@ -1,8 +1,9 @@
 """Community PM2.5 sensors from OpenAQ v3, logged against CAMS in site/internal/bias.csv.
 
-UNVERIFIED AGAINST THE LIVE API. There was no OPENAQ_API_KEY on the machine that wrote this, so
-the endpoints, the field names and the response shapes below come from OpenAQ's documentation
-and have never been seen answering. Check the first real run before trusting any of it.
+The /v3/locations answer was checked against the live API on 10 Nov 2026: 130 PM2.5 locations in
+the box, 78 from AirGradient. Their model code sits in brackets at the end of the instrument name,
+e.g. "AirGradient Open Air Generation 1 (O-1PST)"; 32 are "Unknown AirGradient Sensor" with no
+code. The measurements endpoint was first exercised by the deploy run that followed.
 
 Pairing convention. CAMS global PM2.5 from the ADS forecast dataset is an instantaneous field at
 its valid time T (cams.decode_grib: valid time = run time + step; no accumulation or mean). The
@@ -47,22 +48,21 @@ ATTRIBUTION = "Data provided by AirGradient via OpenAQ (Licensed under CC-BY 4.0
 POSITION_DECIMALS = 3
 COLUMNS = ["step_utc", "sensor_id", "provider", "contributor", "lat", "lon", "sensor_mean",
            "cams_pm25", "cell_i", "cell_j", "distance_km", "flags", "n_readings"]
-MODEL_TOKEN = re.compile(r"^[OI]-\S+")
+MODEL_TOKEN = re.compile(r"\(([OI]-[A-Z0-9][A-Z0-9-]*)\)")
 EARTH_KM = 6371.0
 
 
 def airgradient_model(location: dict):
-    """First `O-...` or `I-...` token in the instrument names, else the location name, else None.
+    """First `O-...` or `I-...` model code in brackets in the instrument names, else None.
 
-    UNVERIFIED: without a key it is unknown which OpenAQ field carries the AirGradient model
-    code. Instrument names and the location name are the two places it plausibly appears.
+    OpenAQ puts it there, e.g. "... Generation 1 (O-1PST)"; the live answer of 10 Nov 2026 had no
+    code anywhere else. Location names are not read: owners type them ("I-City", "Lot O-12").
+    None when there is no code, as for "Unknown AirGradient Sensor".
     """
-    texts = [i.get("name") for i in location.get("instruments") or []]
-    texts.append(location.get("name"))
-    for text in texts:
-        for token in (text or "").split():
-            if MODEL_TOKEN.match(token):
-                return token
+    for text in (i.get("name") for i in location.get("instruments") or []):
+        match = MODEL_TOKEN.search(text or "")
+        if match:
+            return match.group(1)
     return None
 
 
@@ -108,13 +108,30 @@ def _candidate(location: dict):
             "contributor": (location.get("owner") or {}).get("name")}
 
 
-def fetch_candidates(key: str, budget, log, http: dict) -> list:
-    """Outdoor PM2.5 sensors in the box, at most MAX_SENSORS (lowest sensor ids first)."""
+def _reported_recently(location: dict, now: datetime) -> bool:
+    """False only when the location says its last reading is over MAX_AGE old."""
+    last = (location.get("datetimeLast") or {}).get("utc")
+    if not last:
+        return True
+    try:
+        return now - _utc(last) <= MAX_AGE
+    except (ValueError, TypeError, AttributeError):
+        return True
+
+
+def fetch_candidates(key: str, now: datetime, budget, log, http: dict) -> list:
+    """Outdoor PM2.5 sensors in the box that reported recently, at most MAX_SENSORS.
+
+    Locations whose last reading is too old are dropped before the cap, so the cap is spent on
+    sensors that can pass the freshness filter.
+    """
     url = f"{API}/locations?bbox={BBOX}&parameters_id={PM25_PARAMETER_ID}&limit=1000"
     doc = _get_json(url, key, "OpenAQ locations", budget, log, http)
-    found = [c for c in map(_candidate, doc["results"]) if c is not None]
+    outdoor = [(c, loc) for c, loc in ((_candidate(loc), loc) for loc in doc["results"]) if c]
+    found = [c for c, loc in outdoor if _reported_recently(loc, now)]
     found.sort(key=lambda c: c["sensor_id"])
-    log(f"OpenAQ: {len(doc['results'])} locations, {len(found)} outdoor PM2.5 sensors")
+    log(f"OpenAQ: {len(doc['results'])} locations, {len(outdoor)} outdoor PM2.5 sensors, "
+        f"{len(found)} reported in the last {int(MAX_AGE.total_seconds() // 3600)} h")
     if len(found) > MAX_SENSORS:
         log(f"OpenAQ: capped at {MAX_SENSORS} of {len(found)} sensors")
         found = found[:MAX_SENSORS]
@@ -160,7 +177,7 @@ def collect_used(key: str, now: datetime, budget, log, http: dict) -> list:
     """Candidates that pass the filters, each with its readings, `pm25` and `measured`."""
     sleep = http.get("sleep", time.sleep)
     used = []
-    for n, cand in enumerate(fetch_candidates(key, budget, log, http)):
+    for n, cand in enumerate(fetch_candidates(key, now, budget, log, http)):
         if n:
             sleep(CALL_GAP_S)
         readings = fetch_readings(key, cand["sensor_id"], now, budget, log, http)
