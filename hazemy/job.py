@@ -15,13 +15,14 @@ from shapely.ops import unary_union
 
 from hazemy import cams, compute, drivers, firms, gfs, gfs_extra, met, output, output_v2
 from hazemy import grid as gridmod
-from hazemy import singapore, trajectory, weather, windfile
+from hazemy import openaq, singapore, trajectory, weather, windfile
 from hazemy.common import (Budget, PipelineError, http_get, make_logger, require_env,
                            utc_now)
 
 DEFAULT_OUT = os.path.join("site", "v1", "hazemy.json")
 DEFAULT_OUT_V2 = os.path.join("site", "v2", "hazemy.json")
 DEFAULT_OUT_WIND = os.path.join("site", "v2", "wind.json")
+DEFAULT_OUT_BIAS = os.path.join("site", "internal", "bias.csv")
 PREVIOUS_V2_URL = "https://greg-celestara.github.io/hazemy-data/v2/hazemy.json"
 DEFAULT_CACHE = "cache"
 DEFAULT_GFS_CACHE = "cache-gfs"
@@ -65,7 +66,8 @@ def cams_series(env, now, cells, cache_dir, budget, log, retrieve) -> tuple:
 def run_job(env, *, out=DEFAULT_OUT, out_v2=None, out_wind=None, cache_dir=DEFAULT_CACHE,
             gfs_cache_dir=DEFAULT_GFS_CACHE, now_fn=utc_now, log=print,
             retrieve=cams.retrieve_grib, fetch_wind=gfs.fetch_wind_messages,
-            fetch_bundle=gfs_extra.fetch_bundle, fetch_wx=None, http=None) -> int:
+            fetch_bundle=gfs_extra.fetch_bundle, fetch_wx=None, http=None,
+            out_bias=None) -> int:
     """0 when v1 was written; 1 on any v1 failure, with the published files untouched.
 
     v1 never depends on v2: it is built and written first. v2 is built only when `out_v2` is
@@ -75,8 +77,13 @@ def run_job(env, *, out=DEFAULT_OUT, out_v2=None, out_wind=None, cache_dir=DEFAU
 
     wind.json is built only when `out_wind` is given, after v2 but independent of it, in its own
     guarded block: on failure the error is logged and no file is written.
+
+    The OpenAQ step runs inside the v2 build (its `sensors` block is part of v2) and is guarded
+    on its own: any failure there drops the block and the bias rows, never v1 or v2. It runs
+    only when `OPENAQ_API_KEY` is set; `out_bias` is where bias.csv goes (None: not written).
     """
-    safe_log = make_logger([env.get("ADS_API_KEY"), env.get("FIRMS_MAP_KEY")], log)
+    safe_log = make_logger([env.get("ADS_API_KEY"), env.get("FIRMS_MAP_KEY"),
+                            env.get("OPENAQ_API_KEY")], log)
     memo = {}
 
     def wind_once(cycle, fhr, budget, log=print):
@@ -89,7 +96,8 @@ def run_job(env, *, out=DEFAULT_OUT, out_v2=None, out_wind=None, cache_dir=DEFAU
         ctx = {"env": env, "now_fn": now_fn, "cache_dir": cache_dir, "gfs_cache": gfs_cache_dir,
                "log": safe_log, "retrieve": retrieve, "fetch_wind": wind_once,
                "fetch_bundle": fetch_bundle, "http": http or {},
-               "fetch_wx": fetch_wx or _nomads_fetcher(http or {})}
+               "fetch_wx": fetch_wx or _nomads_fetcher(http or {}), "out_bias": out_bias,
+               "bias_rows": []}
         budget = Budget()
         body, shared = _build_v1(ctx, budget)
         output.write_atomic(out, body)
@@ -101,6 +109,8 @@ def run_job(env, *, out=DEFAULT_OUT, out_v2=None, out_wind=None, cache_dir=DEFAU
         _publish_v2(ctx, budget, shared, out_v2)
     if out_wind is not None:
         _publish_wind(ctx, budget, shared, out_wind)
+    if out_bias is not None:
+        _publish_bias(ctx, budget)
     return 0
 
 
@@ -231,17 +241,46 @@ def _build_v2(ctx, budget, shared) -> bytes:
     sg_all = singapore.cell_sg(series, now, offsets)
     near_sg = singapore.sg_flags(cells, singapore.load_land_km())
     nea = singapore.fetch_nea(now, budget, log=log, **ctx["http"])
+    sensors = _sensors(ctx, budget, now, cells, series)
     fires = shared["fires"]
     doc = output_v2.assemble(
         v1_parts=parts, cells=cells, air=air, wind=wind,
         sg=[sg_all[k] if near_sg[k] else None for k in range(len(cells))],
         days=days, drivers=per_driver, paths=[trajectory.rounded(p) for p in paths], fires=fires,
         fires_daily=drivers.fires_daily(fires, det), bins=drivers.fire_bins(det), nea=nea,
+        sensors=sensors,
         towns=towns_v2, traj_cycles=tcycles, nea_attribution=singapore.attribution(now),
         weather=wx, met_updated=forecast["updated"], warnings=forecast["warnings"])
     body = output_v2.validate(doc)
     log(f"downloaded {budget.total} bytes in total")
     return body
+
+
+def _sensors(ctx, budget, now, cells, series):
+    """The v2 `sensors` block, or None. Leaves this run's bias rows in ctx. Never raises."""
+    log, key = ctx["log"], ctx["env"].get("OPENAQ_API_KEY")
+    if not key:
+        log("OPENAQ_API_KEY is not set: skipping OpenAQ (no sensors block, no bias rows)")
+        return None
+    try:
+        used = openaq.collect_used(key, now, budget, log, ctx["http"])
+        ctx["bias_rows"] = openaq.bias_rows(used, cells, series, now)
+        block = openaq.sensors_block(used)
+        if block is not None:
+            output_v2._check_sensors(block)
+    except Exception as err:  # noqa: BLE001 - OpenAQ is optional and must never stop v1 or v2
+        log(f"WARNING: OpenAQ failed, publishing without sensors. {type(err).__name__}: {err}")
+        return None
+    return block
+
+
+def _publish_bias(ctx, budget) -> None:
+    """Write bias.csv on every run (history plus this run's rows, if any) so Pages keeps it."""
+    try:
+        openaq.store_bias(ctx["bias_rows"], ctx["out_bias"], ctx["cache_dir"], budget,
+                          ctx["log"], ctx["http"])
+    except Exception as err:  # noqa: BLE001 - the bias log is an extra, never fatal
+        ctx["log"](f"ERROR: bias.csv not written. {type(err).__name__}: {err}")
 
 
 def _met(ctx, budget, now, towns: list) -> dict:
@@ -300,11 +339,13 @@ def main(argv=None) -> int:
     parser.add_argument("--out-v2", default=DEFAULT_OUT_V2, help="v2 file (default %(default)s)")
     parser.add_argument("--out-wind", default=DEFAULT_OUT_WIND,
                         help="wind file (default %(default)s)")
+    parser.add_argument("--out-bias", default=DEFAULT_OUT_BIAS,
+                        help="bias log (default %(default)s)")
     parser.add_argument("--cache", default=DEFAULT_CACHE, help="CAMS download cache directory")
     parser.add_argument("--gfs-cache", default=DEFAULT_GFS_CACHE, help="GFS cache directory")
     args = parser.parse_args(argv)
     return run_job(os.environ, out=args.out, out_v2=args.out_v2,
-                   out_wind=args.out_wind, cache_dir=args.cache,
+                   out_wind=args.out_wind, out_bias=args.out_bias, cache_dir=args.cache,
                    gfs_cache_dir=args.gfs_cache)
 
 

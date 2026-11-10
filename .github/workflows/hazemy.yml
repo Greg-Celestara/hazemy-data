@@ -1,7 +1,8 @@
-# Builds site/v1/hazemy.json, site/v2/hazemy.json and the optional site/v2/wind.json, and
-# publishes them with GitHub Pages.
+# Builds site/v1/hazemy.json, site/v2/hazemy.json, the optional site/v2/wind.json and
+# site/internal/bias.csv (OpenAQ sensors vs CAMS), and publishes them with GitHub Pages.
 #
-# Secrets (repo Settings -> Secrets and variables -> Actions): ADS_API_KEY, FIRMS_MAP_KEY.
+# Secrets (repo Settings -> Secrets and variables -> Actions): ADS_API_KEY, FIRMS_MAP_KEY,
+# OPENAQ_API_KEY (optional: without it the sensors step is skipped).
 # Pages must be set to "GitHub Actions" as its source (Settings -> Pages).
 #
 # Schedule: every 30 min, at :15 and :45. The 00 UTC CAMS run is published about 10:00 UTC, so
@@ -76,6 +77,13 @@ jobs:
           path: cache/met_last.json
           key: hazemy-met-restore-${{ github.run_id }}
           restore-keys: hazemy-met-
+      - name: Restore the sensor bias log
+        # Fallback copy only: the job seeds bias.csv from the published Pages file first.
+        uses: actions/cache/restore@v4
+        with:
+          path: cache/bias.csv
+          key: hazemy-bias-restore-${{ github.run_id }}
+          restore-keys: hazemy-bias-
       - name: Restore the GFS downloads
         # No exact key exists on purpose: the newest saved snapshot is restored by prefix.
         uses: actions/cache/restore@v4
@@ -87,6 +95,7 @@ jobs:
         env:
           ADS_API_KEY: ${{ secrets.ADS_API_KEY }}
           FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+          OPENAQ_API_KEY: ${{ secrets.OPENAQ_API_KEY }}
         run: >
           python -m hazemy --out site/v1/hazemy.json --out-v2 site/v2/hazemy.json
           --out-wind site/v2/wind.json --cache cache --gfs-cache cache-gfs
@@ -121,6 +130,12 @@ jobs:
         with:
           path: cache/met_last.json
           key: hazemy-met-${{ github.run_id }}
+      - name: Save the sensor bias log
+        if: hashFiles('cache/bias.csv') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: cache/bias.csv
+          key: hazemy-bias-${{ github.run_id }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -59,6 +59,11 @@ zero detections (empty lists; `path_fire_count_72h` 0 with null province and tre
   "nea": { "updated_utc": "...", "regions": {
       "north":   { "lat": 1.41, "lon": 103.82, "psi_24h": 64, "band": 2 },
       "south": {}, "east": {}, "west": {}, "central": {} } },
+  "sensors": { "openaq_updated_utc": "2026-11-09T03:40:00Z",
+    "openaq_attribution": "Data provided by AirGradient via OpenAQ (Licensed under CC-BY 4.0)",
+    "sensors": [ { "lat": 3.139, "lon": 101.687, "name": "Example outdoor unit",
+                   "contributor": "Example owner", "provider": "AirGradient", "pm25": 8.7,
+                   "measured_utc": "2026-11-09T03:40:00Z" } ] },
   "towns": [ { "name": "Petaling Jaya", "lat": 3.107, "lon": 101.606, "country": "MY",
                "met": { "place": "Petaling", "id": "Ds057", "km": 3.2, "days": [
                  { "date": "2026-10-23", "morning": "Tiada Hujan", "afternoon": "Ribut petir di beberapa tempat",
@@ -80,6 +85,15 @@ zero detections (empty lists; `path_fire_count_72h` 0 with null province and tre
 - **`towns`.** Every town gets `country` ("MY" or "SG"). Add ~20 Singapore planning areas
   (hand-compiled, centroid coordinates, each with `nea_region` = north/south/east/west/central,
   following NEA's region split). Malaysian towns unchanged.
+- **`sensors` (optional, ignored if unknown).** Malaysian outdoor PM2.5 community sensors from
+  OpenAQ v3, CC-BY 4.0, **measured** by low-cost units, not official readings. Sits between `nea`
+  and `towns`. `openaq_updated_utc` is the newest `measured_utc`; `openaq_attribution` is exactly
+  the string shown and must be displayed with the values. Per sensor: `lat`, `lon`, `name`,
+  `contributor` (the owner OpenAQ publishes, else null), `provider`, `pm25` (newest reading,
+  ug/m3, one decimal), `measured_utc`. Only used sensors are listed: newest reading under 2 h old,
+  outdoor (AirGradient model `O-...`), value 0.5-1000, at least two distinct values in the last
+  6 readings. The block is omitted entirely when OpenAQ fails, no key is set, or no sensor
+  qualifies. v1 never carries it.
 - **`nea`.** From `https://api-open.data.gov.sg/v2/real-time/api/psi` (no key), latest item:
   `psi_twenty_four_hourly` per region, plus `regionMetadata` lat/lon. `band` by PSI range:
   1 0–50, 2 51–100, 3 101–200, 4 201–300, 5 >300. If NEA fails, omit `nea` (the app then shows

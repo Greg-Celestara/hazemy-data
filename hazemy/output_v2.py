@@ -4,13 +4,14 @@ from __future__ import annotations
 import json
 from datetime import date, datetime, timedelta
 
-from hazemy import output
+from hazemy import openaq, output
 from hazemy.common import fmt
 from hazemy.grid import GRID
 from hazemy.trajectory import BOX, POINTS
 
 TOP_KEYS = ["version", "generated_utc", "sources", "grid", "cells", "fires_72h", "fires_daily",
             "fire_bins", "towns", "warnings"]
+SENSOR_KEYS = ["lat", "lon", "name", "contributor", "provider", "pm25", "measured_utc"]
 MAX_BINS = 1500
 DAY_KEYS = ["date", "api", "api_min", "api_max", "band", "wind850", "weather"]
 NOW_WEATHER_KEYS = ["temp_c", "rh", "feels_c", "rain_mm_3h"]
@@ -29,7 +30,7 @@ V1_SOURCE_KEYS = {"cams_run_utc", "firms_fetched_utc", "firms_updated_utc", "gfs
 def assemble(*, v1_parts: dict, cells: list, air: list, wind: list, sg: list, days: list,
              drivers: list, paths: list, fires: list, fires_daily: list, bins: list, nea,
              towns: list, traj_cycles: list, nea_attribution: str, weather: dict,
-             met_updated=None, warnings: list = ()) -> dict:
+             met_updated=None, warnings: list = (), sensors=None) -> dict:
     """`v1_parts` are the arguments of output.assemble (generated, cams_run, ...).
 
     `weather` is weather.cell_weather(): per cell now, today and per-day values; the new
@@ -56,6 +57,8 @@ def assemble(*, v1_parts: dict, cells: list, air: list, wind: list, sg: list, da
         doc["nea"] = nea
         doc["sources"]["nea_updated_utc"] = nea["updated_utc"]
         doc["sources"]["nea_attribution"] = nea_attribution
+    if sensors is not None:
+        doc["sensors"] = sensors
     if met_updated is not None:
         doc["sources"]["met_updated_utc"] = fmt(met_updated)
     doc["towns"] = towns
@@ -160,6 +163,17 @@ def _check_nea(nea: dict) -> None:
         output._need(region["band"] in range(1, 6) and region["psi_24h"] >= 0, "nea region")
 
 
+def _check_sensors(block: dict) -> None:
+    need = output._need
+    need(list(block) == ["openaq_updated_utc", "openaq_attribution", "sensors"], "sensors keys")
+    need(block["openaq_attribution"] == openaq.ATTRIBUTION, "sensors attribution")
+    need(len(block["sensors"]) > 0, "sensors block must be omitted when empty")
+    for s in block["sensors"]:
+        need(list(s) == SENSOR_KEYS, f"sensor keys {list(s)}")
+        need(isinstance(s["lat"], float) and isinstance(s["lon"], float), "sensor position")
+        need(isinstance(s["pm25"], (int, float)) and 0.5 <= s["pm25"] <= 1000, "sensor pm25")
+
+
 def _check_met(town: dict) -> None:
     need = output._need
     met = town.get("met")
@@ -187,8 +201,9 @@ def validate(doc: dict) -> bytes:
     """Check shape and ranges, return compact JSON bytes under MAX_BYTES."""
     need = output._need
     expected = list(TOP_KEYS)
-    if "nea" in doc:
-        expected.insert(expected.index("towns"), "nea")
+    for optional in ("sensors", "nea"):
+        if optional in doc:
+            expected.insert(expected.index("towns"), optional)
     need(list(doc) == expected, f"top-level keys {list(doc)}")
     need(doc["version"] == 2 and doc["grid"] == GRID, "version or grid")
     need(V1_SOURCE_KEYS <= set(doc["sources"]) and ("nea" in doc) == (
@@ -210,6 +225,8 @@ def validate(doc: dict) -> bytes:
          "fire_bins")
     if "nea" in doc:
         _check_nea(doc["nea"])
+    if "sensors" in doc:
+        _check_sensors(doc["sensors"])
     towns = doc["towns"]
     need(len(towns) > 0 and all(t["country"] in ("MY", "SG") for t in towns), "towns")
     need(all(("nea_region" in t) == (t["country"] == "SG") for t in towns), "town nea_region")
