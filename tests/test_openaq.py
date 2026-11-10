@@ -435,6 +435,22 @@ class JobSensors(unittest.TestCase):
                           rows[0]["flags"]), ("2026-10-19T09:00:00Z", "12.0", "20.0", ""))
         self.assertTrue(os.path.exists(os.path.join(self.root, "cache", "bias.csv")))
 
+    def test_sensors_and_nea_together_publish_v2(self):
+        # Live failure, 10 Nov 2026: with both blocks present the key-order check expected
+        # sensors before nea, so every run fell back to the previous v2.
+        from tests.test_v2 import nea_body
+
+        class WithNea(FakeOpenAQ):
+            def __call__(self, req, timeout=None):
+                if "data.gov.sg" in req.full_url:
+                    return FakeResponse(nea_body())
+                return super().__call__(req, timeout)
+
+        self.assertEqual(self.run_it(WithNea(self.LOCATIONS, self.READINGS)), 0)
+        v2 = self.load("v2")
+        keys = list(v2)
+        self.assertEqual(keys[keys.index("nea"):keys.index("towns")], ["nea", "sensors"])
+
     def test_published_positions_have_at_most_three_decimals(self):
         precise = [location(1, lat=3.1394567, lon=101.6873219)]
         self.assertEqual(self.run_it(FakeOpenAQ(precise, {1: GOOD})), 0)

@@ -201,7 +201,7 @@ def validate(doc: dict) -> bytes:
     """Check shape and ranges, return compact JSON bytes under MAX_BYTES."""
     need = output._need
     expected = list(TOP_KEYS)
-    for optional in ("sensors", "nea"):
+    for optional in ("nea", "sensors"):
         if optional in doc:
             expected.insert(expected.index("towns"), optional)
     need(list(doc) == expected, f"top-level keys {list(doc)}")
